@@ -10,6 +10,9 @@ from datetime import datetime
 from sklearn.ensemble import RandomForestClassifier
 import numpy as np
 import warnings 
+# Suppress pandas UserWarning about raw DBAPI connection
+warnings.filterwarnings('ignore', message='pandas only supports SQLAlchemy connectable')
+
 import os # NEW: Import os for environment variables
 from dotenv import load_dotenv
 load_dotenv()
@@ -358,7 +361,7 @@ train_recommendation_model()
 
 # --- 5. API Endpoints ---
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def read_root():
     return {"message": "EdTech AI Portal API (Enhanced) is running."}
 
