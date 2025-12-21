@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import FileResponse # NEW: To serve the HTML frontend
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
@@ -10,13 +11,18 @@ from datetime import datetime
 from sklearn.ensemble import RandomForestClassifier
 import numpy as np
 import warnings 
-# Suppress pandas UserWarning about raw DBAPI connection
-warnings.filterwarnings('ignore', message='pandas only supports SQLAlchemy connectable')
-
 import os # NEW: Import os for environment variables
+import logging # NEW: For audit logs
 from dotenv import load_dotenv
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+
 load_dotenv()
 from groq import Groq # NEW: Import Groq client
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+import requests # NEW: For Microsoft Graph API calls
 
 
 try:
@@ -58,15 +64,34 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# --- Global Exception Handler ---
+from fastapi.responses import JSONResponse
+from fastapi.requests import Request
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logging.error(f"Global Exception: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal Server Error: {str(exc)}"},
+    )
+
 # --- 2. Pydantic Models ---
 class LoginRequest(BaseModel):
     username: str
     password: str
 
+# FR-2: Social Login Request Model
+class SocialLoginRequest(BaseModel):
+    provider: str
+    token: str
+
 class LoginResponse(BaseModel):
     success: bool = True
     user_id: str
-    role: str
+    role: Optional[str] = None
+    require_2fa: bool = False
+    message: Optional[str] = None
 
 # ENHANCEMENT: Student Profile includes initial subject scores
 class AddStudentRequest(BaseModel):
@@ -134,6 +159,14 @@ class UpdateStudentRequest(BaseModel):
     science_score: float
     english_language_score: float
 
+# NEW: Registration Request Model
+class StudentRegistrationRequest(BaseModel):
+    name: str
+    email: str # Will be used as ID
+    password: str
+    grade: int
+    preferred_subject: str = "General"
+
 
 # NEW: Models for Live Classes
 class ClassScheduleRequest(BaseModel):
@@ -194,7 +227,9 @@ def get_db_connection():
 
 def fetch_data_df(query, params=()):
     conn = get_db_connection()
-    df = pd.read_sql_query(query, conn, params=params)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=UserWarning)
+        df = pd.read_sql_query(query, conn, params=params)
     conn.close()
     return df
 
@@ -246,6 +281,17 @@ def initialize_db():
     )
     """)
 
+    # Live Class Students Join Table (NEW - Normalized)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS live_class_students (
+        live_class_id INTEGER,
+        student_id TEXT,
+        FOREIGN KEY (live_class_id) REFERENCES live_classes(id) ON DELETE CASCADE,
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+        PRIMARY KEY (live_class_id, student_id)
+    )
+    """)
+
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS groups (
         id SERIAL PRIMARY KEY,
@@ -288,7 +334,7 @@ def initialize_db():
             ('SURJEET', 'Surjeet J', 11, 'Physics', 77.0, 'Punjabi', '123', 70.0, 65.0, 80.0),
             ('DEVA', 'Deva Krishnan', 11, 'Chemistry', 90.0, 'Tamil', '123', 95.0, 88.0, 92.0),
             ('HARISH', 'Harish Boy', 5, 'English', 7.0, 'Hindi', '123', 50.0, 50.0, 45.0),
-            ('admin', 'Teacher Admin', 0, 'All', 100.0, 'English', 'admin', 100.0, 100.0, 100.0), 
+            ('teacher', 'Teacher Admin', 0, 'All', 100.0, 'English', 'teacher', 100.0, 100.0, 100.0), 
         ]
         # Use executemany with %s placeholder
         cursor.executemany("INSERT INTO students VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", students_data)
@@ -303,10 +349,22 @@ def initialize_db():
         # Custom loop for explicit insert if needed, but executemany works
         cursor.executemany("INSERT INTO activities (student_id, date, topic, difficulty, score, time_spent_min) VALUES (%s, %s, %s, %s, %s, %s)", activities_data)
         
+    # Migration: Rename 'admin' to 'teacher' if it exists
+    cursor.execute("UPDATE students SET id = 'teacher', password = 'teacher' WHERE id = 'admin'")
+    
     conn.commit()
     conn.close()
 
-initialize_db()
+try:
+    initialize_db()
+except Exception as e:
+    logging.error(f"⚠️ Initial Database Connection Failed: {e}")
+    logging.error("The server will start, but database features will fail until connection is restored.")
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    from fastapi.responses import Response
+    return Response(status_code=204)
 
 # --- 4. ML Engine Functions (Simplified for stability) ---
 
@@ -361,11 +419,24 @@ train_recommendation_model()
 
 # --- 5. API Endpoints ---
 
-@app.api_route("/", methods=["GET", "HEAD"])
+@app.get("/")
 def read_root():
-    return {"message": "EdTech AI Portal API (Enhanced) is running."}
+    # SERVE FRONTEND: This fixes the Google OAuth "origin" error by ensuring
+    # the page runs on http://127.0.0.1:8000 (which is authorized).
+    return FileResponse('index.html')
+
+@app.get("/script.js")
+def read_script():
+    return FileResponse('script.js')
 
 # --- AUTHENTICATION ---
+
+class LoginResponse(BaseModel):
+    success: bool = True
+    user_id: str
+    role: str
+
+# ... (Previous code)
 
 @app.post("/api/auth/login", response_model=LoginResponse)
 async def login_user(request: LoginRequest):
@@ -379,17 +450,213 @@ async def login_user(request: LoginRequest):
         conn.close()
 
     if user:
-        role = 'Teacher' if user['id'] == 'admin' else 'Parent' 
+        role = 'Teacher' if user['id'] == 'teacher' else 'Student'
+        # AUDIT LOGGING: Log successful login
+        logging.info(f"Audit: Successful login for user '{user['id']}' with role '{role}' at {datetime.now()}") 
         return LoginResponse(user_id=user['id'], role=role)
     else:
+        # AUDIT LOGGING: Log failed login
+        logging.warning(f"Audit: Failed login attempt for username '{request.username}' at {datetime.now()}")
         raise HTTPException(status_code=401, detail="Invalid credentials.")
+
+
+
+@app.post("/api/auth/social-login", response_model=LoginResponse)
+async def social_login(request: SocialLoginRequest):
+    # SIMULATION: In a real app, 'token' would be verified with Google/Microsoft to get the email.
+    # Here, we simulate a successful verification.
+    
+    # Generate a deterministic ID based on provider (e.g., 'google_user_01')
+    # For demo, we just use a fixed ID per provider to show persistence, or random?
+    # Let's use a fixed ID for simplicity of testing: "{provider}_User"
+    user_id = f"{request.provider}_User"
+    
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor(cursor_factory=extras.RealDictCursor)
+        
+        # 1. Check if user exists
+        cursor.execute("SELECT id FROM students WHERE id = %s", (user_id,))
+        user = cursor.fetchone()
+        
+        if not user:
+            # 2. auto-register if new
+            logging.info(f"Audit: Social Login - Creating new user {user_id}")
+            cursor.execute(
+                """
+                INSERT INTO students (id, name, grade, preferred_subject, attendance_rate, home_language, password, math_score, science_score, english_language_score)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    user_id, f"{request.provider} User", 1, "General", 
+                    100.0, "English", "social_login", # Dummy password
+                    80.0, 80.0, 80.0 # Default scores
+                )
+            )
+            # Add demo activities so the dashboard isn't empty
+            cursor.execute("""
+                INSERT INTO activities (student_id, date, topic, difficulty, score, time_spent_min)
+                VALUES 
+                (%s, '2025-12-01', 'Intro to Connect', 'Easy', 95.0, 15),
+                (%s, '2025-12-02', 'System Testing', 'Medium', 82.0, 45),
+                (%s, '2025-12-03', 'Performance Review', 'Hard', 78.0, 30)
+            """, (user_id, user_id, user_id))
+            conn.commit()
+        
+        # 3. Log success
+        logging.info(f"Audit: Successful Social Login for '{user_id}' at {datetime.now()}")
+        return LoginResponse(user_id=user_id, role='Student')
+        
+    except Exception as e:
+        logging.error(f"Social Login Error: {e}")
+        raise HTTPException(status_code=500, detail="Social Login failed.")
+    finally:
+        conn.close()
+
+# NEW: Registration Endpoint
+@app.post("/api/auth/register", status_code=201)
+async def register_student(request: StudentRegistrationRequest):
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        
+        # Check if user exists
+        cursor.execute("SELECT id FROM students WHERE id = %s", (request.email,))
+        if cursor.fetchone() is not None:
+             raise HTTPException(status_code=400, detail="Account with this Email/ID already exists.")
+
+        # Insert new student with defaults
+        cursor.execute(
+            """
+            INSERT INTO students (id, name, grade, preferred_subject, attendance_rate, home_language, password, math_score, science_score, english_language_score)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                request.email, request.name, request.grade, request.preferred_subject, 
+                100.0, "English", request.password, # Defaults: 100% attendance, English
+                0.0, 0.0, 0.0 # Default scores (0 until assessment)
+            )
+        )
+        conn.commit()
+        logging.info(f"Audit: New Student Registration '{request.email}'")
+        return {"message": "Registration successful! You can now login."}
+    except psycopg2.IntegrityError:
+        conn.rollback()
+        raise HTTPException(status_code=400, detail="ID already exists.")
+    except Exception as e:
+        conn.rollback()
+        if isinstance(e, HTTPException): raise e
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+# FR-3: Microsoft OAuth Endpoint
+class MicrosoftLoginRequest(BaseModel):
+    token: str
+
+@app.post("/api/auth/microsoft-login", response_model=LoginResponse)
+async def microsoft_login(request: MicrosoftLoginRequest):
+    try:
+        # 1. Verify the Token via Microsoft Graph API
+        # We use the access token to get the user's profile.
+        # If the token is invalid, this request will fail.
+        headers = {'Authorization': f'Bearer {request.token}'}
+        graph_response = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers)
+        
+        if graph_response.status_code != 200:
+            raise HTTPException(status_code=401, detail="Invalid Microsoft Token")
+            
+        user_data = graph_response.json()
+        
+        # 2. Extract User Info
+        # Microsoft Graph 'me' returns: id, displayName, givenName, jobTitle, mail, mobilePhone, officeLocation, preferredLanguage, surname, userPrincipalName
+        user_id = user_data.get('mail') or user_data.get('userPrincipalName')
+        name = user_data.get('displayName', 'Microsoft User')
+        
+        if not user_id:
+             raise HTTPException(status_code=400, detail="Could not retrieve email from Microsoft account.")
+
+        conn = get_db_connection()
+        try:
+            cursor = conn.cursor(cursor_factory=extras.RealDictCursor)
+            
+            # 3. Check if user exists
+            cursor.execute("SELECT id FROM students WHERE id = %s", (user_id,))
+            user = cursor.fetchone()
+            
+            if not user:
+                # STRICT MODE: Prevent auto-registration
+                logging.warning(f"Audit: Microsoft Login Fail - User {user_id} not found.")
+                raise HTTPException(status_code=403, detail="Access Denied. Please ask your teacher to add your Email to the class roster first.")
+            
+            logging.info(f"Audit: Successful Microsoft Login for '{user_id}' at {datetime.now()}")
+            return LoginResponse(user_id=user_id, role='Student')
+            
+        finally:
+            conn.close()
+
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logging.error(f"Microsoft Login System Error: {e}")
+        raise HTTPException(status_code=500, detail="Login failed")
+
+# FR-2: Real Google OAuth Endpoint
+class GoogleLoginRequest(BaseModel):
+    token: str
+
+GOOGLE_CLIENT_ID = "365152229186-a9av353n3vhpavimmo9q1qgdm78g9k5f.apps.googleusercontent.com"
+
+@app.post("/api/auth/google-login", response_model=LoginResponse)
+async def google_login(request: GoogleLoginRequest):
+    try:
+        # 1. Verify the Token
+        id_info = id_token.verify_oauth2_token(
+            request.token, 
+            google_requests.Request(), 
+            GOOGLE_CLIENT_ID
+        )
+
+        # 2. Extract User Info
+        email = id_info['email']
+        name = id_info.get('name', 'Google User')
+        
+        # Use email as the User ID
+        user_id = email
+        
+        conn = get_db_connection()
+        try:
+            cursor = conn.cursor(cursor_factory=extras.RealDictCursor)
+            
+            # 3. Check if user exists
+            cursor.execute("SELECT id FROM students WHERE id = %s", (user_id,))
+            user = cursor.fetchone()
+            
+            if not user:
+                # STRICT MODE: Prevent auto-registration
+                logging.warning(f"Audit: Google Login Fail - User {user_id} not found.")
+                raise HTTPException(status_code=403, detail="Access Denied. Please ask your teacher to add your Email to the class roster first.")
+            
+            logging.info(f"Audit: Successful Google Login for '{user_id}' at {datetime.now()}")
+            return LoginResponse(user_id=user_id, role='Student')
+            
+        finally:
+            conn.close()
+
+    except ValueError as e:
+        # Invalid token
+        logging.error(f"Google Token Error: {e}")
+        raise HTTPException(status_code=401, detail="Invalid Google Token")
+    except Exception as e:
+        logging.error(f"Google Login System Error: {e}")
+        raise HTTPException(status_code=500, detail="Login failed")
 
 # --- TEACHER DASHBOARD ---
 
 @app.get("/api/teacher/overview", response_model=TeacherOverviewResponse)
 async def get_teacher_overview():
     # Fetch all students including their initial scores
-    students_df = fetch_data_df("SELECT id, name, grade, preferred_subject, attendance_rate, home_language, math_score, science_score, english_language_score FROM students WHERE id != 'admin'")
+    students_df = fetch_data_df("SELECT id, name, grade, preferred_subject, attendance_rate, home_language, math_score, science_score, english_language_score FROM students WHERE id != 'teacher'")
     
     if students_df.empty:
         return TeacherOverviewResponse(total_students=0, class_attendance_avg=0.0, class_score_avg=0.0, roster=[])
@@ -493,7 +760,7 @@ async def update_student(student_id: str, request: UpdateStudentRequest):
 
 @app.delete("/api/students/{student_id}")
 async def delete_student(student_id: str):
-    if student_id == 'admin':
+    if student_id == 'teacher':
         raise HTTPException(status_code=403, detail="Cannot delete the admin user.")
         
     conn = get_db_connection()
@@ -858,13 +1125,23 @@ async def schedule_class(request: ClassScheduleRequest):
     try:
         cursor = conn.cursor()
         
-        # Store list as comma-separated string
-        targets_str = ",".join(request.target_students)
+        # Store list as comma-separated string (DEPRECATED: Keeping for legacy compatibility if needed)
+        targets_str = "" 
         
         cursor.execute(
-            "INSERT INTO live_classes (teacher_id, topic, date, meet_link, target_students) VALUES (%s, %s, %s, %s, %s)",
+            "INSERT INTO live_classes (teacher_id, topic, date, meet_link, target_students) VALUES (%s, %s, %s, %s, %s) RETURNING id",
             (request.teacher_id, request.topic, request.date, request.meet_link, targets_str)
         )
+        class_id = cursor.fetchone()[0] # Fetch the new ID
+
+        # NEW: Insert into normalized join table
+        if request.target_students:
+            student_data = [(class_id, student_id) for student_id in request.target_students]
+            cursor.executemany(
+                "INSERT INTO live_class_students (live_class_id, student_id) VALUES (%s, %s)",
+                student_data
+            )
+
         conn.commit()
         return {"message": "Class scheduled successfully."}
     except Exception as e:
@@ -886,15 +1163,25 @@ async def get_classes(teacher_id: Optional[str] = None):
             if teacher_id and c['teacher_id'] != teacher_id:
                 continue
                 
-            targets = c['target_students'].split(',') if c['target_students'] else []
+            # NEW: Fetch from normalized table
+            # Check if using old text column or new table. For now, prioritize new table.
+            # If migration didn't happen, old data might only be in 'target_students'.
             
+            # Fetch from join table
+            cursor.execute("SELECT student_id FROM live_class_students WHERE live_class_id = %s", (c['id'],))
+            db_students = [row['student_id'] for row in cursor.fetchall()]
+
+            # Fallback to old column if join table empty (for backward compatibility of old records)
+            if not db_students and c['target_students']:
+                 db_students = c['target_students'].split(',')
+
             results.append(ClassResponse(
                 id=c['id'],
                 teacher_id=c['teacher_id'],
                 topic=c['topic'],
                 date=c['date'],
                 meet_link=c['meet_link'],
-                target_students=targets
+                target_students=db_students
             ))
         return results
     finally:
@@ -944,3 +1231,8 @@ async def end_class():
 @app.get("/api/class/status")
 async def get_class_status():
     return CLASS_SESSION 
+
+if __name__ == "__main__":
+    import uvicorn
+    # Run the server on port 8000, accessible via 127.0.0.1
+    uvicorn.run(app, host="127.0.0.1", port=8000)
