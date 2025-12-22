@@ -422,25 +422,46 @@ train_recommendation_model()
 
 # --- 5. API Endpoints ---
 
+def get_static_file_path(filename: str) -> Optional[str]:
+    """
+    Robustly find a static file (index.html, script.js) by checking multiple convenient locations.
+    """
+    # 1. Check relative to this script file (Most reliable for deployments)
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    path_primary = os.path.join(base_dir, filename)
+    if os.path.exists(path_primary):
+        return path_primary
+    
+    # 2. Check current working directory (Good for local testing)
+    path_cwd = os.path.join(os.getcwd(), filename)
+    if os.path.exists(path_cwd):
+        return path_cwd
+        
+    return None
+
 @app.get("/")
 def read_root():
     """
     Serve the main frontend file.
-    Uses an absolute path so it works even when the working directory is different in deployment.
     """
-    index_path = os.path.join(BASE_DIR, "index.html")
-    if os.path.exists(index_path):
+    index_path = get_static_file_path("index.html")
+    if index_path:
         return FileResponse(index_path)
-    # Fallback: avoid crashing if the file was not shipped with the backend
-    raise HTTPException(status_code=500, detail="Frontend index.html not found on server.")
+        
+    # Fallback with detailed error for debugging
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    raise HTTPException(
+        status_code=500, 
+        detail=f"Frontend index.html not found. Server looked in: {base_dir} and {os.getcwd()}"
+    )
 
 @app.get("/script.js")
 def read_script():
     """
-    Serve the main JS bundle with an absolute path.
+    Serve the main JS bundle.
     """
-    script_path = os.path.join(BASE_DIR, "script.js")
-    if os.path.exists(script_path):
+    script_path = get_static_file_path("script.js")
+    if script_path:
         return FileResponse(script_path)
     raise HTTPException(status_code=500, detail="Frontend script.js not found on server.")
 
@@ -648,9 +669,20 @@ async def google_login(request: GoogleLoginRequest):
             user = cursor.fetchone()
             
             if not user:
-                # STRICT MODE: Prevent auto-registration
-                logging.warning(f"Audit: Google Login Fail - User {user_id} not found.")
-                raise HTTPException(status_code=403, detail="Access Denied. Please ask your teacher to add your Email to the class roster first.")
+                # Auto-Register user
+                logging.info(f"Audit: Google Login - Creating new user {user_id}")
+                cursor.execute(
+                    """
+                    INSERT INTO students (id, name, grade, preferred_subject, attendance_rate, home_language, password, math_score, science_score, english_language_score)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """,
+                    (
+                        user_id, name, 1, "General", 
+                        100.0, "English", "google_oauth", 
+                        80.0, 80.0, 80.0
+                    )
+                )
+                conn.commit()
             
             logging.info(f"Audit: Successful Google Login for '{user_id}' at {datetime.now()}")
             return LoginResponse(user_id=user_id, role='Student')
