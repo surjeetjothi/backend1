@@ -423,11 +423,11 @@ train_recommendation_model()
 def read_root():
     # SERVE FRONTEND: This fixes the Google OAuth "origin" error by ensuring
     # the page runs on http://127.0.0.1:8000 (which is authorized).
-    return FileResponse(os.path.join(os.getcwd(), 'index.html'))
+    return FileResponse('index.html')
 
 @app.get("/script.js")
 def read_script():
-    return FileResponse(os.path.join(os.getcwd(), 'script.js'))
+    return FileResponse('script.js')
 
 # --- AUTHENTICATION ---
 
@@ -605,7 +605,7 @@ async def microsoft_login(request: MicrosoftLoginRequest):
 class GoogleLoginRequest(BaseModel):
     token: str
 
-GOOGLE_CLIENT_ID = "365152229186-a9av353n3vhpavimmo9q1qgdm78g9k5f.apps.googleusercontent.com"
+GOOGLE_CLIENT_ID = "365152229186-lp0v1lc00ns14m7svjaev07hhot806u1.apps.googleusercontent.com"
 
 @app.post("/api/auth/google-login", response_model=LoginResponse)
 async def google_login(request: GoogleLoginRequest):
@@ -1235,4 +1235,4 @@ async def get_class_status():
 if __name__ == "__main__":
     import uvicorn
     # Run the server on port 8000, accessible via 127.0.0.1
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000) 
