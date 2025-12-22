@@ -214,7 +214,10 @@ class MaterialResponse(BaseModel):
 
 
     
-# --- 3. DATABASE (SQLite) Functions and Initialization ---
+# --- 3. PATHS & DATABASE (SQLite) Functions and Initialization ---
+
+# Resolve project root based on this file's location (works in deployment too)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 MIN_ACTIVITIES = 5 
@@ -421,13 +424,25 @@ train_recommendation_model()
 
 @app.get("/")
 def read_root():
-    # SERVE FRONTEND: This fixes the Google OAuth "origin" error by ensuring
-    # the page runs on http://127.0.0.1:8000 (which is authorized).
-    return FileResponse('index.html')
+    """
+    Serve the main frontend file.
+    Uses an absolute path so it works even when the working directory is different in deployment.
+    """
+    index_path = os.path.join(BASE_DIR, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    # Fallback: avoid crashing if the file was not shipped with the backend
+    raise HTTPException(status_code=500, detail="Frontend index.html not found on server.")
 
 @app.get("/script.js")
 def read_script():
-    return FileResponse('script.js')
+    """
+    Serve the main JS bundle with an absolute path.
+    """
+    script_path = os.path.join(BASE_DIR, "script.js")
+    if os.path.exists(script_path):
+        return FileResponse(script_path)
+    raise HTTPException(status_code=500, detail="Frontend script.js not found on server.")
 
 # --- AUTHENTICATION ---
 
