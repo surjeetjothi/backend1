@@ -419,15 +419,40 @@ train_recommendation_model()
 
 # --- 5. API Endpoints ---
 
+def get_static_file_path(filename: str) -> Optional[str]:
+    """
+    Robustly find a static file (index.html, script.js) by checking multiple locations.
+    """
+    # 1. Check relative to this script file (Most reliable for deployments)
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    path_primary = os.path.join(base_dir, filename)
+    if os.path.exists(path_primary):
+        return path_primary
+    
+    # 2. Check current working directory (Good for local testing)
+    path_cwd = os.path.join(os.getcwd(), filename)
+    if os.path.exists(path_cwd):
+        return path_cwd
+        
+    return None
+
 @app.get("/")
 def read_root():
-    # SERVE FRONTEND: This fixes the Google OAuth "origin" error by ensuring
-    # the page runs on http://127.0.0.1:8000 (which is authorized).
-    return FileResponse('index.html')
+    # SERVE FRONTEND
+    path = get_static_file_path("index.html")
+    if path:
+        return FileResponse(path)
+    
+    # Debug message if still not found
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    return {"message": f"CRITICAL: index.html not found. Looked in {base_dir} and {os.getcwd()}"}
 
 @app.get("/script.js")
 def read_script():
-    return FileResponse('script.js')
+    path = get_static_file_path("script.js")
+    if path:
+        return FileResponse(path)
+    raise HTTPException(status_code=404, detail="script.js not found")
 
 # --- AUTHENTICATION ---
 
