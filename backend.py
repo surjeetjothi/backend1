@@ -1,28 +1,15 @@
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse # NEW: To serve the HTML frontend
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
-import psycopg2
-from psycopg2 import extras
-
+import sqlite3
 import pandas as pd
 from datetime import datetime
 from sklearn.ensemble import RandomForestClassifier
 import numpy as np
 import warnings 
 import os # NEW: Import os for environment variables
-import logging # NEW: For audit logs
-from dotenv import load_dotenv
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-
-load_dotenv()
 from groq import Groq # NEW: Import Groq client
-from google.oauth2 import id_token
-from google.auth.transport import requests as google_requests
-import requests # NEW: For Microsoft Graph API calls
 
 
 try:
@@ -38,22 +25,7 @@ except Exception as e:
 # to focus on the core dashboard logic and stability.
 
 # --- 1. CONFIGURATION AND SETUP ---
-tags_metadata = [
-    {"name": "Authentication", "description": "Login and role verification."},
-    {"name": "Teacher Dashboard", "description": "Class overview, stats, and roster management."},
-    {"name": "Students", "description": "CRUD operations for student profiles."},
-    {"name": "Activities", "description": "Logging student activities and performance."},
-    {"name": "AI Tutor", "description": "Chat with the Groq-powered AI assistant."},
-    {"name": "Groups", "description": "Management of study groups and materials."},
-    {"name": "Live Classes", "description": "Scheduling and managing Google Meet sessions."},
-]
-
-app = FastAPI(
-    title="EdTech AI Portal API",
-    description="Backend API for the Noble Nexus EdTech platform. Features include:\n* Role-based Auth\n* Student/Teacher Dashboards\n* AI-powered recommendations & chat\n* Live Class Scheduling\n* Supabase (PostgreSQL) Integration",
-    version="1.0.0",
-    openapi_tags=tags_metadata
-)
+app = FastAPI(title="EdTech AI Portal API - Enhanced")
 
 # --- CORS Configuration ---
 app.add_middleware(
@@ -64,34 +36,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- Global Exception Handler ---
-from fastapi.responses import JSONResponse
-from fastapi.requests import Request
-
-@app.exception_handler(Exception)
-async def global_exception_handler(request: Request, exc: Exception):
-    logging.error(f"Global Exception: {exc}", exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content={"detail": f"Internal Server Error: {str(exc)}"},
-    )
-
 # --- 2. Pydantic Models ---
 class LoginRequest(BaseModel):
     username: str
     password: str
 
-# FR-2: Social Login Request Model
-class SocialLoginRequest(BaseModel):
-    provider: str
-    token: str
-
 class LoginResponse(BaseModel):
     success: bool = True
     user_id: str
-    role: Optional[str] = None
-    require_2fa: bool = False
-    message: Optional[str] = None
+    role: str
 
 # ENHANCEMENT: Student Profile includes initial subject scores
 class AddStudentRequest(BaseModel):
@@ -159,14 +112,6 @@ class UpdateStudentRequest(BaseModel):
     science_score: float
     english_language_score: float
 
-# NEW: Registration Request Model
-class StudentRegistrationRequest(BaseModel):
-    name: str
-    email: str # Will be used as ID
-    password: str
-    grade: int
-    preferred_subject: str = "General"
-
 
 # NEW: Models for Live Classes
 class ClassScheduleRequest(BaseModel):
@@ -216,20 +161,17 @@ class MaterialResponse(BaseModel):
     
 # --- 3. DATABASE (SQLite) Functions and Initialization ---
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL = "edtech_fastapi_enhanced.db" # New file for enhanced schema
 MIN_ACTIVITIES = 5 
 
 def get_db_connection():
-    if not DATABASE_URL:
-        raise ValueError("DATABASE_URL environment variable is not set. Please add it to your .env file.")
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = sqlite3.connect(DATABASE_URL)
+    conn.row_factory = sqlite3.Row
     return conn
 
 def fetch_data_df(query, params=()):
     conn = get_db_connection()
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=UserWarning)
-        df = pd.read_sql_query(query, conn, params=params)
+    df = pd.read_sql_query(query, conn, params=params)
     conn.close()
     return df
 
@@ -237,8 +179,6 @@ def initialize_db():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Enable UUID extension if needed (optional, using strings for IDs currently)
-    # cursor.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";')
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS students (
@@ -249,16 +189,16 @@ def initialize_db():
         attendance_rate REAL,
         home_language TEXT,
         password TEXT,
-        math_score REAL,
-        science_score REAL,
-        english_language_score REAL
+        math_score REAL,          -- ENHANCED
+        science_score REAL,       -- ENHANCED
+        english_language_score REAL -- ENHANCED
     )
     """)
     
     # Activities Table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS activities (
-        id SERIAL PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         student_id TEXT,
         date TEXT,
         topic TEXT,
@@ -269,37 +209,43 @@ def initialize_db():
     )
     """)
     
+    # IMPORTANT: Enable foreign key constraints for CASCADE DELETE
+    cursor.execute("PRAGMA foreign_keys = ON")
+
     # Live Classes Table (NEW)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS live_classes (
-        id SERIAL PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         teacher_id TEXT,
         topic TEXT,
         date TEXT,
         meet_link TEXT,
-        target_students TEXT
+        target_students TEXT -- NEW: Comma-separated IDs, or 'ALL'
     )
     """)
+    
+    # MIGRATION LOADER (for existing DBs)
+    try:
+        cursor.execute("ALTER TABLE live_classes ADD COLUMN target_students TEXT")
+    except sqlite3.OperationalError:
+        pass # Column likely already exists
 
-    # Live Class Students Join Table (NEW - Normalized)
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS live_class_students (
-        live_class_id INTEGER,
-        student_id TEXT,
-        FOREIGN KEY (live_class_id) REFERENCES live_classes(id) ON DELETE CASCADE,
-        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
-        PRIMARY KEY (live_class_id, student_id)
-    )
-    """)
+
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS groups (
-        id SERIAL PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT UNIQUE,
         description TEXT,
         subject TEXT DEFAULT 'General'
     )
     """)
+    
+    # MIGRATION: Add subject column if missing
+    try:
+        cursor.execute("ALTER TABLE groups ADD COLUMN subject TEXT DEFAULT 'General'")
+    except sqlite3.OperationalError:
+        pass
 
     # Group Members Table (New)
     cursor.execute("""
@@ -315,7 +261,7 @@ def initialize_db():
     # Group Materials Table (NEW)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS group_materials (
-        id SERIAL PRIMARY KEY,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         group_id INTEGER,
         title TEXT,
         type TEXT,
@@ -326,45 +272,35 @@ def initialize_db():
     """)
 
     # Seed data only if tables are empty
-    cursor.execute("SELECT COUNT(*) FROM students")
-    if cursor.fetchone()[0] == 0:
+    if cursor.execute("SELECT COUNT(*) FROM students").fetchone()[0] == 0:
         students_data = [
+            # ID, Name, Grade, Subject, Attend %, Language, Password, Math, Science, English
             ('S001', 'Alice Smith', 9, 'Math', 92.5, 'English', '123', 85.0, 78.5, 90.0),
             ('S002', 'Bob Johnson', 10, 'Science', 85.0, 'Spanish', '123', 60.0, 95.0, 75.0),
             ('SURJEET', 'Surjeet J', 11, 'Physics', 77.0, 'Punjabi', '123', 70.0, 65.0, 80.0),
             ('DEVA', 'Deva Krishnan', 11, 'Chemistry', 90.0, 'Tamil', '123', 95.0, 88.0, 92.0),
             ('HARISH', 'Harish Boy', 5, 'English', 7.0, 'Hindi', '123', 50.0, 50.0, 45.0),
-            ('teacher', 'Teacher Admin', 0, 'All', 100.0, 'English', 'teacher', 100.0, 100.0, 100.0), 
+            # Teacher user
+            ('admin', 'Teacher Admin', 0, 'All', 100.0, 'English', 'admin', 100.0, 100.0, 100.0), 
         ]
-        # Use executemany with %s placeholder
-        cursor.executemany("INSERT INTO students VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", students_data)
+        cursor.executemany("INSERT INTO students VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", students_data)
 
         activities_data = [
+            # S001 Activities (Avg: 80)
             ('S001', '2025-11-01', 'Algebra', 'Medium', 95, 10),
             ('S001', '2025-11-03', 'Geometry', 'Medium', 65, 25), 
             ('S002', '2025-11-01', 'Physics', 'Medium', 40, 45),
             ('S002', '2025-11-02', 'Chemistry', 'Easy', 55, 30),
+            # Harish Activity (Avg: 80)
             ('HARISH', '2025-11-10', 'Reading', 'Easy', 80, 15),
         ]
-        # Custom loop for explicit insert if needed, but executemany works
-        cursor.executemany("INSERT INTO activities (student_id, date, topic, difficulty, score, time_spent_min) VALUES (%s, %s, %s, %s, %s, %s)", activities_data)
+        for a in activities_data:
+             cursor.execute("INSERT INTO activities (student_id, date, topic, difficulty, score, time_spent_min) VALUES (?, ?, ?, ?, ?, ?)", a)
         
-    # Migration: Rename 'admin' to 'teacher' if it exists
-    cursor.execute("UPDATE students SET id = 'teacher', password = 'teacher' WHERE id = 'admin'")
-    
     conn.commit()
     conn.close()
 
-try:
-    initialize_db()
-except Exception as e:
-    logging.error(f"⚠️ Initial Database Connection Failed: {e}")
-    logging.error("The server will start, but database features will fail until connection is restored.")
-
-@app.get("/favicon.ico", include_in_schema=False)
-async def favicon():
-    from fastapi.responses import Response
-    return Response(status_code=204)
+initialize_db()
 
 # --- 4. ML Engine Functions (Simplified for stability) ---
 
@@ -398,7 +334,7 @@ def get_recommendation(student_id: str) -> Optional[str]:
         return "Not enough data (minimum 5 activities) to generate an ML-based recommendation."
 
     # Fetch last activity for prediction
-    df_history = fetch_data_df("SELECT score, time_spent_min FROM activities WHERE student_id = %s ORDER BY date DESC LIMIT 1", (student_id,))
+    df_history = fetch_data_df("SELECT score, time_spent_min FROM activities WHERE student_id = ? ORDER BY date DESC LIMIT 1", (student_id,))
     
     if df_history.empty:
         return "No activity history available to base a recommendation on."
@@ -421,242 +357,29 @@ train_recommendation_model()
 
 @app.get("/")
 def read_root():
-    # SERVE FRONTEND: This fixes the Google OAuth "origin" error by ensuring
-    # the page runs on http://127.0.0.1:8000 (which is authorized).
-    return FileResponse('index.html')
-
-@app.get("/script.js")
-def read_script():
-    return FileResponse('script.js')
+    return {"message": "EdTech AI Portal API (Enhanced) is running."}
 
 # --- AUTHENTICATION ---
-
-class LoginResponse(BaseModel):
-    success: bool = True
-    user_id: str
-    role: str
-
-# ... (Previous code)
 
 @app.post("/api/auth/login", response_model=LoginResponse)
 async def login_user(request: LoginRequest):
     conn = get_db_connection()
-    try:
-        cursor = conn.cursor(cursor_factory=extras.RealDictCursor)
-        cursor.execute("SELECT id, name, password FROM students WHERE id = %s AND password = %s", 
-                            (request.username, request.password))
-        user = cursor.fetchone()
-    finally:
-        conn.close()
+    user = conn.execute("SELECT id, name, password FROM students WHERE id = ? AND password = ?", 
+                        (request.username, request.password)).fetchone()
+    conn.close()
 
     if user:
-        role = 'Teacher' if user['id'] == 'teacher' else 'Student'
-        # AUDIT LOGGING: Log successful login
-        logging.info(f"Audit: Successful login for user '{user['id']}' with role '{role}' at {datetime.now()}") 
+        role = 'Teacher' if user['id'] == 'admin' else 'Parent' 
         return LoginResponse(user_id=user['id'], role=role)
     else:
-        # AUDIT LOGGING: Log failed login
-        logging.warning(f"Audit: Failed login attempt for username '{request.username}' at {datetime.now()}")
         raise HTTPException(status_code=401, detail="Invalid credentials.")
-
-
-
-@app.post("/api/auth/social-login", response_model=LoginResponse)
-async def social_login(request: SocialLoginRequest):
-    # SIMULATION: In a real app, 'token' would be verified with Google/Microsoft to get the email.
-    # Here, we simulate a successful verification.
-    
-    # Generate a deterministic ID based on provider (e.g., 'google_user_01')
-    # For demo, we just use a fixed ID per provider to show persistence, or random?
-    # Let's use a fixed ID for simplicity of testing: "{provider}_User"
-    user_id = f"{request.provider}_User"
-    
-    conn = get_db_connection()
-    try:
-        cursor = conn.cursor(cursor_factory=extras.RealDictCursor)
-        
-        # 1. Check if user exists
-        cursor.execute("SELECT id FROM students WHERE id = %s", (user_id,))
-        user = cursor.fetchone()
-        
-        if not user:
-            # 2. auto-register if new
-            logging.info(f"Audit: Social Login - Creating new user {user_id}")
-            cursor.execute(
-                """
-                INSERT INTO students (id, name, grade, preferred_subject, attendance_rate, home_language, password, math_score, science_score, english_language_score)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """,
-                (
-                    user_id, f"{request.provider} User", 1, "General", 
-                    100.0, "English", "social_login", # Dummy password
-                    80.0, 80.0, 80.0 # Default scores
-                )
-            )
-            # Add demo activities so the dashboard isn't empty
-            cursor.execute("""
-                INSERT INTO activities (student_id, date, topic, difficulty, score, time_spent_min)
-                VALUES 
-                (%s, '2025-12-01', 'Intro to Connect', 'Easy', 95.0, 15),
-                (%s, '2025-12-02', 'System Testing', 'Medium', 82.0, 45),
-                (%s, '2025-12-03', 'Performance Review', 'Hard', 78.0, 30)
-            """, (user_id, user_id, user_id))
-            conn.commit()
-        
-        # 3. Log success
-        logging.info(f"Audit: Successful Social Login for '{user_id}' at {datetime.now()}")
-        return LoginResponse(user_id=user_id, role='Student')
-        
-    except Exception as e:
-        logging.error(f"Social Login Error: {e}")
-        raise HTTPException(status_code=500, detail="Social Login failed.")
-    finally:
-        conn.close()
-
-# NEW: Registration Endpoint
-@app.post("/api/auth/register", status_code=201)
-async def register_student(request: StudentRegistrationRequest):
-    conn = get_db_connection()
-    try:
-        cursor = conn.cursor()
-        
-        # Check if user exists
-        cursor.execute("SELECT id FROM students WHERE id = %s", (request.email,))
-        if cursor.fetchone() is not None:
-             raise HTTPException(status_code=400, detail="Account with this Email/ID already exists.")
-
-        # Insert new student with defaults
-        cursor.execute(
-            """
-            INSERT INTO students (id, name, grade, preferred_subject, attendance_rate, home_language, password, math_score, science_score, english_language_score)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """,
-            (
-                request.email, request.name, request.grade, request.preferred_subject, 
-                100.0, "English", request.password, # Defaults: 100% attendance, English
-                0.0, 0.0, 0.0 # Default scores (0 until assessment)
-            )
-        )
-        conn.commit()
-        logging.info(f"Audit: New Student Registration '{request.email}'")
-        return {"message": "Registration successful! You can now login."}
-    except psycopg2.IntegrityError:
-        conn.rollback()
-        raise HTTPException(status_code=400, detail="ID already exists.")
-    except Exception as e:
-        conn.rollback()
-        if isinstance(e, HTTPException): raise e
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        conn.close()
-
-# FR-3: Microsoft OAuth Endpoint
-class MicrosoftLoginRequest(BaseModel):
-    token: str
-
-@app.post("/api/auth/microsoft-login", response_model=LoginResponse)
-async def microsoft_login(request: MicrosoftLoginRequest):
-    try:
-        # 1. Verify the Token via Microsoft Graph API
-        # We use the access token to get the user's profile.
-        # If the token is invalid, this request will fail.
-        headers = {'Authorization': f'Bearer {request.token}'}
-        graph_response = requests.get('https://graph.microsoft.com/v1.0/me', headers=headers)
-        
-        if graph_response.status_code != 200:
-            raise HTTPException(status_code=401, detail="Invalid Microsoft Token")
-            
-        user_data = graph_response.json()
-        
-        # 2. Extract User Info
-        # Microsoft Graph 'me' returns: id, displayName, givenName, jobTitle, mail, mobilePhone, officeLocation, preferredLanguage, surname, userPrincipalName
-        user_id = user_data.get('mail') or user_data.get('userPrincipalName')
-        name = user_data.get('displayName', 'Microsoft User')
-        
-        if not user_id:
-             raise HTTPException(status_code=400, detail="Could not retrieve email from Microsoft account.")
-
-        conn = get_db_connection()
-        try:
-            cursor = conn.cursor(cursor_factory=extras.RealDictCursor)
-            
-            # 3. Check if user exists
-            cursor.execute("SELECT id FROM students WHERE id = %s", (user_id,))
-            user = cursor.fetchone()
-            
-            if not user:
-                # STRICT MODE: Prevent auto-registration
-                logging.warning(f"Audit: Microsoft Login Fail - User {user_id} not found.")
-                raise HTTPException(status_code=403, detail="Access Denied. Please ask your teacher to add your Email to the class roster first.")
-            
-            logging.info(f"Audit: Successful Microsoft Login for '{user_id}' at {datetime.now()}")
-            return LoginResponse(user_id=user_id, role='Student')
-            
-        finally:
-            conn.close()
-
-    except HTTPException as he:
-        raise he
-    except Exception as e:
-        logging.error(f"Microsoft Login System Error: {e}")
-        raise HTTPException(status_code=500, detail="Login failed")
-
-# FR-2: Real Google OAuth Endpoint
-class GoogleLoginRequest(BaseModel):
-    token: str
-
-GOOGLE_CLIENT_ID = "365152229186-a9av353n3vhpavimmo9q1qgdm78g9k5f.apps.googleusercontent.com"
-
-@app.post("/api/auth/google-login", response_model=LoginResponse)
-async def google_login(request: GoogleLoginRequest):
-    try:
-        # 1. Verify the Token
-        id_info = id_token.verify_oauth2_token(
-            request.token, 
-            google_requests.Request(), 
-            GOOGLE_CLIENT_ID
-        )
-
-        # 2. Extract User Info
-        email = id_info['email']
-        name = id_info.get('name', 'Google User')
-        
-        # Use email as the User ID
-        user_id = email
-        
-        conn = get_db_connection()
-        try:
-            cursor = conn.cursor(cursor_factory=extras.RealDictCursor)
-            
-            # 3. Check if user exists
-            cursor.execute("SELECT id FROM students WHERE id = %s", (user_id,))
-            user = cursor.fetchone()
-            
-            if not user:
-                # STRICT MODE: Prevent auto-registration
-                logging.warning(f"Audit: Google Login Fail - User {user_id} not found.")
-                raise HTTPException(status_code=403, detail="Access Denied. Please ask your teacher to add your Email to the class roster first.")
-            
-            logging.info(f"Audit: Successful Google Login for '{user_id}' at {datetime.now()}")
-            return LoginResponse(user_id=user_id, role='Student')
-            
-        finally:
-            conn.close()
-
-    except ValueError as e:
-        # Invalid token
-        logging.error(f"Google Token Error: {e}")
-        raise HTTPException(status_code=401, detail="Invalid Google Token")
-    except Exception as e:
-        logging.error(f"Google Login System Error: {e}")
-        raise HTTPException(status_code=500, detail="Login failed")
 
 # --- TEACHER DASHBOARD ---
 
 @app.get("/api/teacher/overview", response_model=TeacherOverviewResponse)
 async def get_teacher_overview():
     # Fetch all students including their initial scores
-    students_df = fetch_data_df("SELECT id, name, grade, preferred_subject, attendance_rate, home_language, math_score, science_score, english_language_score FROM students WHERE id != 'teacher'")
+    students_df = fetch_data_df("SELECT id, name, grade, preferred_subject, attendance_rate, home_language, math_score, science_score, english_language_score FROM students WHERE id != 'admin'")
     
     if students_df.empty:
         return TeacherOverviewResponse(total_students=0, class_attendance_avg=0.0, class_score_avg=0.0, roster=[])
@@ -707,7 +430,7 @@ async def add_new_student(request: AddStudentRequest):
         cursor.execute(
             """
             INSERT INTO students (id, name, grade, preferred_subject, attendance_rate, home_language, password, math_score, science_score, english_language_score)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 request.id, request.name, request.grade, request.preferred_subject, 
@@ -717,12 +440,8 @@ async def add_new_student(request: AddStudentRequest):
         )
         conn.commit()
         return {"message": f"Student {request.id} ({request.name}) added successfully."}
-    except psycopg2.IntegrityError:
-        conn.rollback()
+    except sqlite3.IntegrityError:
         raise HTTPException(status_code=400, detail=f"Student ID '{request.id}' already exists.")
-    except Exception as e:
-        conn.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
     finally:
         conn.close()
 
@@ -734,16 +453,16 @@ async def update_student(student_id: str, request: UpdateStudentRequest):
         cursor = conn.cursor()
         
         # Check if student exists
-        cursor.execute("SELECT id FROM students WHERE id = %s", (student_id,))
-        if cursor.fetchone() is None:
+        result = cursor.execute("SELECT id FROM students WHERE id = ?", (student_id,)).fetchone()
+        if result is None:
             raise HTTPException(status_code=404, detail=f"Student ID '{student_id}' not found.")
             
         cursor.execute(
             """
             UPDATE students 
-            SET name = %s, grade = %s, preferred_subject = %s, attendance_rate = %s, home_language = %s,
-                math_score = %s, science_score = %s, english_language_score = %s
-            WHERE id = %s
+            SET name = ?, grade = ?, preferred_subject = ?, attendance_rate = ?, home_language = ?,
+                math_score = ?, science_score = ?, english_language_score = ?
+            WHERE id = ?
             """,
             (
                 request.name, request.grade, request.preferred_subject, 
@@ -760,7 +479,7 @@ async def update_student(student_id: str, request: UpdateStudentRequest):
 
 @app.delete("/api/students/{student_id}")
 async def delete_student(student_id: str):
-    if student_id == 'teacher':
+    if student_id == 'admin':
         raise HTTPException(status_code=403, detail="Cannot delete the admin user.")
         
     conn = get_db_connection()
@@ -768,12 +487,12 @@ async def delete_student(student_id: str):
         cursor = conn.cursor()
         
         # Check if student exists
-        cursor.execute("SELECT id FROM students WHERE id = %s", (student_id,))
-        if cursor.fetchone() is None:
+        result = cursor.execute("SELECT id FROM students WHERE id = ?", (student_id,)).fetchone()
+        if result is None:
             raise HTTPException(status_code=404, detail=f"Student ID '{student_id}' not found.")
             
         # Delete student (Activities are CASCADE deleted by the foreign key constraint)
-        cursor.execute("DELETE FROM students WHERE id = %s", (student_id,))
+        cursor.execute("DELETE FROM students WHERE id = ?", (student_id,))
         
         if cursor.rowcount == 0:
             raise HTTPException(status_code=404, detail=f"Student ID '{student_id}' not found.")
@@ -799,14 +518,14 @@ async def add_new_activity(request: AddActivityRequest):
         cursor = conn.cursor()
         
         # Check if student exists
-        cursor.execute("SELECT id FROM students WHERE id = %s", (request.student_id,))
-        if cursor.fetchone() is None:
+        student_check = cursor.execute("SELECT id FROM students WHERE id = ?", (request.student_id,)).fetchone()
+        if student_check is None:
             raise HTTPException(status_code=404, detail=f"Student ID '{request.student_id}' not found.")
             
         cursor.execute(
             """
             INSERT INTO activities (student_id, date, topic, difficulty, score, time_spent_min)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
             (
                 request.student_id, request.date, request.topic, request.difficulty, 
@@ -816,15 +535,12 @@ async def add_new_activity(request: AddActivityRequest):
         conn.commit()
         
         # Re-train model after new data insertion
-        try:
-             train_recommendation_model()
-        except:
-             pass # Fail silent on model train if data issue
+        train_recommendation_model()
         
         return {"message": f"Activity for student {request.student_id} added successfully."}
     except Exception as e:
         conn.rollback()
-        if isinstance(e, HTTPException):
+        if isinstance(e, HTTPException) and e.status_code == 404:
              raise e
         raise HTTPException(status_code=500, detail=f"An error occurred during DB operation: {e}")
     finally:
@@ -855,7 +571,7 @@ async def chat_with_ai_tutor(student_id: str, request: AIChatRequest):
     # ENHANCEMENT: Inject Student Context (In-Context Learning)
     try:
         # Fetch detailed performance data
-        df_history = fetch_data_df("SELECT topic, difficulty, score FROM activities WHERE student_id = %s ORDER BY date DESC LIMIT 5", (student_id,))
+        df_history = fetch_data_df("SELECT topic, difficulty, score FROM activities WHERE student_id = ? ORDER BY date DESC LIMIT 5", (student_id,))
         
         if not df_history.empty:
             # Convert to string format for the LLM
@@ -863,7 +579,7 @@ async def chat_with_ai_tutor(student_id: str, request: AIChatRequest):
             system_prompt += f"\n\nContext - Recent Student Activity:\n{history_text}\n\nUse this data to provide specific compliments or improvement tips."
             
         # Also fetch their profile/initial scores
-        df_profile = fetch_data_df("SELECT grade, preferred_subject, math_score, science_score FROM students WHERE id = %s", (student_id,))
+        df_profile = fetch_data_df("SELECT grade, preferred_subject, math_score, science_score FROM students WHERE id = ?", (student_id,))
         if not df_profile.empty:
             prof = df_profile.iloc[0]
             system_prompt += f"\n\nStudent Profile: Grade {prof['grade']}, Prefers {prof['preferred_subject']}. Initial Scores: Math={prof['math_score']}, Science={prof['science_score']}."
@@ -905,7 +621,7 @@ async def get_all_students_list():
 @app.get("/api/students/{student_id}/data", response_model=StudentDataResponse)
 async def get_student_data(student_id: str):
     # Fetch initial scores and profile data
-    student_profile = fetch_data_df("SELECT math_score, science_score, english_language_score FROM students WHERE id = %s", (student_id,)).to_dict('records')
+    student_profile = fetch_data_df("SELECT math_score, science_score, english_language_score FROM students WHERE id = ?", (student_id,)).to_dict('records')
 
     if not student_profile:
         raise HTTPException(status_code=404, detail=f"Student ID '{student_id}' not found.")
@@ -913,7 +629,7 @@ async def get_student_data(student_id: str):
     profile = student_profile[0]
 
     # Fetch activities history
-    history_df = fetch_data_df("SELECT date, topic, difficulty, score, time_spent_min FROM activities WHERE student_id = %s ORDER BY date ASC", (student_id,))
+    history_df = fetch_data_df("SELECT date, topic, difficulty, score, time_spent_min FROM activities WHERE student_id = ? ORDER BY date ASC", (student_id,))
     
     avg_score = history_df['score'].mean() if not history_df.empty else 0.0
     total_activities = len(history_df)
@@ -948,12 +664,11 @@ async def create_group(request: GroupCreateRequest):
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO groups (name, description, subject) VALUES (%s, %s, %s)", 
+        cursor.execute("INSERT INTO groups (name, description, subject) VALUES (?, ?, ?)", 
                        (request.name, request.description, request.subject))
         conn.commit()
         return {"message": f"Group '{request.name}' created successfully."}
-    except psycopg2.IntegrityError:
-        conn.rollback()
+    except sqlite3.IntegrityError:
         raise HTTPException(status_code=400, detail="Group name must be unique.")
     finally:
         conn.close()
@@ -961,56 +676,45 @@ async def create_group(request: GroupCreateRequest):
 @app.get("/api/groups", response_model=List[GroupResponse])
 async def get_groups():
     conn = get_db_connection()
-    try:
-        cursor = conn.cursor(cursor_factory=extras.RealDictCursor)
-        query = """
-            SELECT g.id, g.name, g.description, g.subject, COUNT(gm.student_id) as member_count
-            FROM groups g
-            LEFT JOIN group_members gm ON g.id = gm.group_id
-            GROUP BY g.id, g.name, g.description, g.subject
-        """ # Postgres requires all columns in GROUP BY or aggregation
-        cursor.execute(query)
-        groups = cursor.fetchall()
-        
-        return [GroupResponse(
-            id=r['id'], 
-            name=r['name'], 
-            description=r['description'], 
-            subject=r['subject'],
-            member_count=r['member_count']
-        ) for r in groups]
-    finally:
-        conn.close()
+    query = """
+        SELECT g.id, g.name, g.description, g.subject, COUNT(gm.student_id) as member_count
+        FROM groups g
+        LEFT JOIN group_members gm ON g.id = gm.group_id
+        GROUP BY g.id
+    """
+    groups = conn.execute(query).fetchall()
+    conn.close()
+    
+    return [GroupResponse(
+        id=r['id'], 
+        name=r['name'], 
+        description=r['description'], 
+        subject=r['subject'],
+        member_count=r['member_count']
+    ) for r in groups]
 
 @app.delete("/api/groups/{group_id}")
 async def delete_group(group_id: int):
     conn = get_db_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM groups WHERE id = %s", (group_id,))
-        conn.commit()
-        return {"message": "Group deleted."}
-    finally:
-         conn.close()
+    conn.execute("DELETE FROM groups WHERE id = ?", (group_id,))
+    conn.commit()
+    conn.close()
+    return {"message": "Group deleted."}
 
 @app.get("/api/groups/{group_id}/members")
 async def get_group_members(group_id: int):
     conn = get_db_connection()
-    try:
-        cursor = conn.cursor(cursor_factory=extras.RealDictCursor)
-        # Get group info
-        cursor.execute("SELECT * FROM groups WHERE id = %s", (group_id,))
-        group = cursor.fetchone()
-        if not group:
-            raise HTTPException(status_code=404, detail="Group not found")
-            
-        # Get members
-        cursor.execute("SELECT student_id FROM group_members WHERE group_id = %s", (group_id,))
-        members = cursor.fetchall()
-        member_ids = [m['student_id'] for m in members]
-        return {"group": dict(group), "members": member_ids}
-    finally:
+    # Get group info
+    group = conn.execute("SELECT * FROM groups WHERE id = ?", (group_id,)).fetchone()
+    if not group:
         conn.close()
+        raise HTTPException(status_code=404, detail="Group not found")
+        
+    # Get members
+    members = conn.execute("SELECT student_id FROM group_members WHERE group_id = ?", (group_id,)).fetchall()
+    member_ids = [m['student_id'] for m in members]
+    conn.close()
+    return {"group": dict(group), "members": member_ids}
 
 @app.post("/api/groups/{group_id}/members")
 async def update_group_members(group_id: int, request: GroupMemberUpdateRequest):
@@ -1018,22 +722,19 @@ async def update_group_members(group_id: int, request: GroupMemberUpdateRequest)
     try:
         cursor = conn.cursor()
         # Verify group exists
-        cursor.execute("SELECT id FROM groups WHERE id = %s", (group_id,))
-        if not cursor.fetchone():
+        if not cursor.execute("SELECT id FROM groups WHERE id = ?", (group_id,)).fetchone():
              raise HTTPException(status_code=404, detail="Group not found")
 
-        # Configured to overwrite members
-        cursor.execute("DELETE FROM group_members WHERE group_id = %s", (group_id,))
+        # Configured to overwrite members (simpler for checkboxes UI)
+        cursor.execute("DELETE FROM group_members WHERE group_id = ?", (group_id,))
         
         if request.student_ids:
             data = [(group_id, sid) for sid in request.student_ids]
-            # executemany works with %s
-            cursor.executemany("INSERT INTO group_members (group_id, student_id) VALUES (%s, %s)", data)
+            cursor.executemany("INSERT INTO group_members (group_id, student_id) VALUES (?, ?)", data)
             
         conn.commit()
         return {"message": "Group members updated."}
-    except psycopg2.IntegrityError: # e.g. student_id doesn't exist
-        conn.rollback()
+    except sqlite3.IntegrityError: # e.g. student_id doesn't exist
         raise HTTPException(status_code=400, detail="Invalid student ID provided.")
     finally:
         conn.close()
@@ -1046,7 +747,7 @@ async def add_group_material(group_id: int, request: MaterialCreateRequest):
     try:
         cursor = conn.cursor()
         date_str = datetime.now().strftime("%Y-%m-%d")
-        cursor.execute("INSERT INTO group_materials (group_id, title, type, content, date) VALUES (%s, %s, %s, %s, %s)",
+        cursor.execute("INSERT INTO group_materials (group_id, title, type, content, date) VALUES (?, ?, ?, ?, ?)",
                        (group_id, request.title, request.type, request.content, date_str))
         conn.commit()
         return {"message": "Material added."}
@@ -1056,30 +757,22 @@ async def add_group_material(group_id: int, request: MaterialCreateRequest):
 @app.get("/api/groups/{group_id}/materials", response_model=List[MaterialResponse])
 async def get_group_materials(group_id: int):
     conn = get_db_connection()
-    try:
-        cursor = conn.cursor(cursor_factory=extras.RealDictCursor)
-        cursor.execute("SELECT * FROM group_materials WHERE group_id = %s ORDER BY id DESC", (group_id,))
-        materials = cursor.fetchall()
-        return [MaterialResponse(id=m['id'], title=m['title'], type=m['type'], content=m['content'], date=m['date']) for m in materials]
-    finally:
-        conn.close()
+    materials = conn.execute("SELECT * FROM group_materials WHERE group_id = ? ORDER BY id DESC", (group_id,)).fetchall()
+    conn.close()
+    return [MaterialResponse(id=m['id'], title=m['title'], type=m['type'], content=m['content'], date=m['date']) for m in materials]
 
 @app.get("/api/students/{student_id}/groups", response_model=List[GroupResponse])
 async def get_student_groups(student_id: str):
     conn = get_db_connection()
-    try:
-        cursor = conn.cursor(cursor_factory=extras.RealDictCursor)
-        query = """
-            SELECT g.id, g.name, g.description, g.subject
-            FROM groups g
-            JOIN group_members gm ON g.id = gm.group_id
-            WHERE gm.student_id = %s
-        """
-        cursor.execute(query, (student_id,))
-        groups = cursor.fetchall()
-        return [GroupResponse(id=r['id'], name=r['name'], description=r['description'], subject=r['subject'], member_count=0) for r in groups]
-    finally:
-        conn.close()
+    query = """
+        SELECT g.id, g.name, g.description, g.subject
+        FROM groups g
+        JOIN group_members gm ON g.id = gm.group_id
+        WHERE gm.student_id = ?
+    """
+    groups = conn.execute(query, (student_id,)).fetchall()
+    conn.close()
+    return [GroupResponse(id=r['id'], name=r['name'], description=r['description'], subject=r['subject'], member_count=0) for r in groups]
 
 
 
@@ -1124,81 +817,55 @@ async def schedule_class(request: ClassScheduleRequest):
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        
-        # Store list as comma-separated string (DEPRECATED: Keeping for legacy compatibility if needed)
-        targets_str = "" 
-        
+        # Convert list to comma-string
+        targets = ",".join(request.target_students)
         cursor.execute(
-            "INSERT INTO live_classes (teacher_id, topic, date, meet_link, target_students) VALUES (%s, %s, %s, %s, %s) RETURNING id",
-            (request.teacher_id, request.topic, request.date, request.meet_link, targets_str)
+            "INSERT INTO live_classes (teacher_id, topic, date, meet_link, target_students) VALUES (?, ?, ?, ?, ?)",
+            (request.teacher_id, request.topic, request.date, request.meet_link, targets)
         )
-        class_id = cursor.fetchone()[0] # Fetch the new ID
-
-        # NEW: Insert into normalized join table
-        if request.target_students:
-            student_data = [(class_id, student_id) for student_id in request.target_students]
-            cursor.executemany(
-                "INSERT INTO live_class_students (live_class_id, student_id) VALUES (%s, %s)",
-                student_data
-            )
-
         conn.commit()
-        return {"message": "Class scheduled successfully."}
+        return {"message": "Live class scheduled successfully."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
     finally:
         conn.close()
 
-@app.get("/api/classes", response_model=List[ClassResponse])
-async def get_classes(teacher_id: Optional[str] = None):
+@app.get("/api/classes/upcoming", response_model=List[ClassResponse])
+async def get_upcoming_classes(student_id: Optional[str] = None):
     conn = get_db_connection()
-    try:
-        cursor = conn.cursor(cursor_factory=extras.RealDictCursor)
-        cursor.execute("SELECT * FROM live_classes ORDER BY date ASC")
-        classes = cursor.fetchall()
+    classes = conn.execute("SELECT * FROM live_classes ORDER BY date ASC").fetchall()
+    conn.close()
+    
+    results = []
+    for row in classes:
+        targets_str = row['target_students'] if row['target_students'] else "ALL"
+        target_list = targets_str.split(',')
         
-        results = []
-        for c in classes:
-            # Filter if teacher_id provided
-            if teacher_id and c['teacher_id'] != teacher_id:
-                continue
-                
-            # NEW: Fetch from normalized table
-            # Check if using old text column or new table. For now, prioritize new table.
-            # If migration didn't happen, old data might only be in 'target_students'.
-            
-            # Fetch from join table
-            cursor.execute("SELECT student_id FROM live_class_students WHERE live_class_id = %s", (c['id'],))
-            db_students = [row['student_id'] for row in cursor.fetchall()]
-
-            # Fallback to old column if join table empty (for backward compatibility of old records)
-            if not db_students and c['target_students']:
-                 db_students = c['target_students'].split(',')
-
-            results.append(ClassResponse(
-                id=c['id'],
-                teacher_id=c['teacher_id'],
-                topic=c['topic'],
-                date=c['date'],
-                meet_link=c['meet_link'],
-                target_students=db_students
-            ))
-        return results
-    finally:
-        conn.close()
+        # Filter logic:
+        # If student_id provided, include ONLY if they are in the list or list is ALL (or empty)
+        # If no student_id (Teacher/Admin), include everything
+        if student_id:
+            if "ALL" not in target_list and student_id not in target_list:
+                continue 
+        
+        results.append(ClassResponse(
+            id=row['id'],
+            teacher_id=row['teacher_id'],
+            topic=row['topic'],
+            date=row['date'],
+            meet_link=row['meet_link'],
+            target_students=target_list
+        ))
+    return results
 
 @app.delete("/api/classes/{class_id}")
 async def delete_class(class_id: int):
     conn = get_db_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM live_classes WHERE id = %s", (class_id,))
-        if cursor.rowcount == 0:
-             raise HTTPException(status_code=404, detail="Class not found.")
-        conn.commit()
-        return {"message": "Class cancelled."}
-    finally:
-         conn.close()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM live_classes WHERE id = ?", (class_id,))
+    conn.commit()
+    conn.close()
+    return {"message": "Class cancelled."}
 
 # --- 6. VIDEO RECOMMENDATIONS (NEW) ---
 
@@ -1231,8 +898,3 @@ async def end_class():
 @app.get("/api/class/status")
 async def get_class_status():
     return CLASS_SESSION 
-
-if __name__ == "__main__":
-    import uvicorn
-    # Run the server on port 8000, accessible via 127.0.0.1
-    uvicorn.run(app, host="127.0.0.1", port=8000)
