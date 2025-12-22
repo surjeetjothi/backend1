@@ -423,11 +423,11 @@ train_recommendation_model()
 def read_root():
     # SERVE FRONTEND: This fixes the Google OAuth "origin" error by ensuring
     # the page runs on http://127.0.0.1:8000 (which is authorized).
-    return FileResponse('index.html')
+    return FileResponse(os.path.join(os.getcwd(), 'index.html'))
 
 @app.get("/script.js")
 def read_script():
-    return FileResponse('script.js')
+    return FileResponse(os.path.join(os.getcwd(), 'script.js'))
 
 # --- AUTHENTICATION ---
 
