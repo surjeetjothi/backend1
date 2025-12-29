@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 import sqlite3
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 from sklearn.ensemble import RandomForestClassifier
 import numpy as np
 import warnings 
@@ -57,7 +57,7 @@ class AddStudentRequest(BaseModel):
     math_score: float # NEW
     science_score: float # NEW
     english_language_score: float # NEW
-    password: str = "123" # Default password for new students
+    password: str = "Student@123" # Default password for new students
 
 class StudentHistory(BaseModel):
     date: str
@@ -111,6 +111,7 @@ class UpdateStudentRequest(BaseModel):
     math_score: float
     science_score: float
     english_language_score: float
+    password: Optional[str] = None # NEW: Optional password update
 
 
 # NEW: Models for Live Classes
@@ -157,6 +158,27 @@ class MaterialResponse(BaseModel):
     content: str
     date: str
 
+class GenericSocialRequest(BaseModel):
+    provider: str
+    token: str
+
+
+class LogoutRequest(BaseModel):
+    user_id: str
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+class InvitationRequest(BaseModel):
+    role: str
+    expiry_hours: int = 24
+
+class InvitationResponse(BaseModel):
+    link: str
+    token: str
+    expires_at: str
+
 
     
 # --- 3. DATABASE (SQLite) Functions and Initialization ---
@@ -191,9 +213,63 @@ def initialize_db():
         password TEXT,
         math_score REAL,          -- ENHANCED
         science_score REAL,       -- ENHANCED
-        english_language_score REAL -- ENHANCED
+        english_language_score REAL, -- ENHANCED
+        role TEXT DEFAULT 'Student', -- FR-3: Role-Based Registration
+        failed_login_attempts INTEGER DEFAULT 0, -- FR-13: Account Lockout
+        locked_until TEXT -- FR-13: Account Lockout
     )
     """)
+
+    # Invitations Table (FR-4)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS invitations (
+        token TEXT PRIMARY KEY,
+        role TEXT,
+        expires_at TEXT,
+        is_used BOOLEAN DEFAULT 0
+    )
+    """)
+
+    # Password Resets Table (New)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS password_resets (
+        token TEXT PRIMARY KEY,
+        user_id TEXT,
+        expires_at TEXT
+    )
+    """)
+    
+    
+    # MIGRATION: Add role column
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN role TEXT DEFAULT 'Student'")
+    except sqlite3.OperationalError:
+        pass # Column exists
+
+    # MIGRATION: Add lockout columns (FR-13)
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN failed_login_attempts INTEGER DEFAULT 0")
+        cursor.execute("ALTER TABLE students ADD COLUMN locked_until TEXT")
+    except sqlite3.OperationalError:
+        pass 
+
+    # MIGRATION: Add score columns if missing (Fix for existing DBs)
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN math_score REAL DEFAULT 0.0")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN science_score REAL DEFAULT 0.0")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN english_language_score REAL DEFAULT 0.0")
+    except sqlite3.OperationalError:
+        pass 
+    
+    # Ensure Teacher has correct role
+    cursor.execute("UPDATE students SET role = 'Teacher' WHERE id = 'teacher'")
+    conn.commit()
     
     # Activities Table
     cursor.execute("""
@@ -221,6 +297,17 @@ def initialize_db():
         date TEXT,
         meet_link TEXT,
         target_students TEXT -- NEW: Comma-separated IDs, or 'ALL'
+    )
+    """)
+    
+    # Auth Logs Table (FR-14)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS auth_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
+        event_type TEXT, -- Login, Logout, Register, Failure
+        timestamp TEXT,
+        details TEXT
     )
     """)
     
@@ -274,16 +361,16 @@ def initialize_db():
     # Seed data only if tables are empty
     if cursor.execute("SELECT COUNT(*) FROM students").fetchone()[0] == 0:
         students_data = [
-            # ID, Name, Grade, Subject, Attend %, Language, Password, Math, Science, English
-            ('S001', 'Alice Smith', 9, 'Math', 92.5, 'English', '123', 85.0, 78.5, 90.0),
-            ('S002', 'Bob Johnson', 10, 'Science', 85.0, 'Spanish', '123', 60.0, 95.0, 75.0),
-            ('SURJEET', 'Surjeet J', 11, 'Physics', 77.0, 'Punjabi', '123', 70.0, 65.0, 80.0),
-            ('DEVA', 'Deva Krishnan', 11, 'Chemistry', 90.0, 'Tamil', '123', 95.0, 88.0, 92.0),
-            ('HARISH', 'Harish Boy', 5, 'English', 7.0, 'Hindi', '123', 50.0, 50.0, 45.0),
+            # ID, Name, Grade, Subject, Attend %, Language, Password, Math, Science, English, Role, FailedLogin, LockedUntil
+            ('S001', 'Alice Smith', 9, 'Math', 92.5, 'English', '123', 85.0, 78.5, 90.0, 'Student', 0, None),
+            ('S002', 'Bob Johnson', 10, 'Science', 85.0, 'Spanish', '123', 60.0, 95.0, 75.0, 'Student', 0, None),
+            ('SURJEET', 'Surjeet J', 11, 'Physics', 77.0, 'Punjabi', '123', 70.0, 65.0, 80.0, 'Student', 0, None),
+            ('DEVA', 'Deva Krishnan', 11, 'Chemistry', 90.0, 'Tamil', '123', 95.0, 88.0, 92.0, 'Student', 0, None),
+            ('HARISH', 'Harish Boy', 5, 'English', 7.0, 'Hindi', '123', 50.0, 50.0, 45.0, 'Student', 0, None),
             # Teacher user
-            ('admin', 'Teacher Admin', 0, 'All', 100.0, 'English', 'admin', 100.0, 100.0, 100.0), 
+            ('teacher', 'Teacher Admin', 0, 'All', 100.0, 'English', 'teacher', 100.0, 100.0, 100.0, 'Teacher', 0, None), 
         ]
-        cursor.executemany("INSERT INTO students VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", students_data)
+        cursor.executemany("INSERT INTO students (id, name, grade, preferred_subject, attendance_rate, home_language, password, math_score, science_score, english_language_score, role, failed_login_attempts, locked_until) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", students_data)
 
         activities_data = [
             # S001 Activities (Avg: 80)
@@ -297,6 +384,17 @@ def initialize_db():
         for a in activities_data:
              cursor.execute("INSERT INTO activities (student_id, date, topic, difficulty, score, time_spent_min) VALUES (?, ?, ?, ?, ?, ?)", a)
         
+        conn.commit()
+        
+    # Ensure Teacher and Admin exist
+    if not cursor.execute("SELECT id FROM students WHERE id = 'teacher'").fetchone():
+         cursor.execute("INSERT INTO students VALUES ('teacher', 'Teacher Admin', 0, 'All', 100.0, 'English', 'teacher', 100.0, 100.0, 100.0, 'Teacher', 0, NULL)")
+    
+    if not cursor.execute("SELECT id FROM students WHERE id = 'admin'").fetchone():
+         # Create Super Admin
+         cursor.execute("INSERT INTO students VALUES ('admin', 'System Admin', 0, 'All', 100.0, 'English', 'admin', 100.0, 100.0, 100.0, 'Admin', 0, NULL)")
+
+
     conn.commit()
     conn.close()
 
@@ -359,27 +457,383 @@ train_recommendation_model()
 def read_root():
     return {"message": "EdTech AI Portal API (Enhanced) is running."}
 
+# --- CONFIGURATION AND SETUP ---
+import logging
+
+# Configure Logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# --- HELPERS ---
+def log_auth_event(user_id: str, event_type: str, details: str = ""):
+    try:
+        conn = get_db_connection()
+        timestamp = datetime.now().isoformat()
+        conn.execute("INSERT INTO auth_logs (user_id, event_type, timestamp, details) VALUES (?, ?, ?, ?)",
+                     (user_id, event_type, timestamp, details))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logger.error(f"Failed to write auth log: {e}")
+
 # --- AUTHENTICATION ---
 
 @app.post("/api/auth/login", response_model=LoginResponse)
 async def login_user(request: LoginRequest):
+    logger.info(f"Login attempt for user: {request.username}")
+    
     conn = get_db_connection()
-    user = conn.execute("SELECT id, name, password FROM students WHERE id = ? AND password = ?", 
-                        (request.username, request.password)).fetchone()
-    conn.close()
+    cursor = conn.cursor()
+    
+    # Fetch user data including security fields
+    user = cursor.execute("SELECT id, name, password, role, failed_login_attempts, locked_until FROM students WHERE id = ?", 
+                        (request.username,)).fetchone()
+    
+    if not user:
+        conn.close()
+        # To prevent user enumeration, we generic error, but for this MVP we stick to "Invalid credentials"
+        logger.warning(f"Login failed for user: {request.username} - User not found")
+        log_auth_event(request.username, "Login Failed", "User not found")
+        raise HTTPException(status_code=401, detail="Invalid credentials.")
 
-    if user:
-        role = 'Teacher' if user['id'] == 'admin' else 'Parent' 
+    # FR-13: Check Account Lockout
+    if user['locked_until']:
+        lock_time = datetime.fromisoformat(user['locked_until'])
+        if datetime.now() < lock_time:
+            conn.close()
+            remaining_min = int((lock_time - datetime.now()).total_seconds() / 60)
+            log_auth_event(request.username, "Login Failed", "Account locked")
+            raise HTTPException(status_code=403, detail=f"Account locked due to too many failed attempts. Try again in {remaining_min + 1} minutes.")
+        else:
+            # Lock expired, reset
+            cursor.execute("UPDATE students SET failed_login_attempts = 0, locked_until = NULL WHERE id = ?", (request.username,))
+            conn.commit()
+
+    # Password Verification
+    if user['password'] == request.password:
+        # Success: Reset counters
+        cursor.execute("UPDATE students SET failed_login_attempts = 0, locked_until = NULL WHERE id = ?", (request.username,))
+        conn.commit()
+        conn.close()
+        
+        role = user['role'] 
+        logger.info(f"Login successful for user: {request.username} (Role: {role})")
+        log_auth_event(request.username, "Login Success", f"Role: {role}")
         return LoginResponse(user_id=user['id'], role=role)
     else:
-        raise HTTPException(status_code=401, detail="Invalid credentials.")
+        # Failure: Increment counter
+        new_attempts = (user['failed_login_attempts'] or 0) + 1
+        
+        if new_attempts >= 5: # Lockout Threshold
+            lockout_duration = datetime.now() + timedelta(minutes=15)
+            cursor.execute("UPDATE students SET failed_login_attempts = ?, locked_until = ? WHERE id = ?", 
+                           (new_attempts, lockout_duration.isoformat(), request.username))
+            conn.commit()
+            conn.close()
+            logger.warning(f"Account locked for user: {request.username}")
+            log_auth_event(request.username, "Account Locked", "Too many failed attempts")
+            raise HTTPException(status_code=403, detail="Account locked. Too many failed attempts. Try again in 15 minutes.")
+        else:
+            cursor.execute("UPDATE students SET failed_login_attempts = ? WHERE id = ?", (new_attempts, request.username))
+            conn.commit()
+            conn.close()
+            remaining = 5 - new_attempts
+            logger.warning(f"Login failed for user: {request.username} - Invalid password. Attempts: {new_attempts}")
+            log_auth_event(request.username, "Login Failed", f"Invalid password. Attempts: {new_attempts}")
+            raise HTTPException(status_code=401, detail=f"Invalid credentials. You have {remaining} attempts remaining.")
+
+def validate_password_strength(password: str):
+    if len(password) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters long.")
+    if not any(char.isdigit() for char in password):
+        raise HTTPException(status_code=400, detail="Password must contain at least one number.")
+    if not any(char.isalpha() for char in password):
+        raise HTTPException(status_code=400, detail="Password must contain at least one letter.")
+    if not any(not char.isalnum() for char in password):
+        raise HTTPException(status_code=400, detail="Password must contain at least one special character.")
+    return True
+
+class RegisterRequest(BaseModel):
+    name: str
+    email: str
+    password: str
+    grade: Optional[int] = 9
+    preferred_subject: Optional[str] = "General"
+    role: str = "Student" # FR-3
+    invitation_token: Optional[str] = None # FR-4
+
+@app.post("/api/auth/register", status_code=201)
+async def register_user(request: RegisterRequest):
+    # FR-12: Password Policy
+    validate_password_strength(request.password)
+
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        
+        # FR-4: Validate Invitation for Teachers or restricted roles
+        if request.role == 'Teacher' or request.role == 'Admin':
+             if not request.invitation_token:
+                 raise HTTPException(status_code=403, detail="Invitation required for this role.")
+             
+             # Check token
+             invite = cursor.execute("SELECT * FROM invitations WHERE token = ? AND is_used = 0", (request.invitation_token,)).fetchone()
+             if not invite:
+                 raise HTTPException(status_code=400, detail="Invalid or used invitation token.")
+             
+             if datetime.now() > datetime.fromisoformat(invite['expires_at']):
+                 raise HTTPException(status_code=400, detail="Invitation expired.")
+                 
+             if invite['role'] != request.role:
+                 raise HTTPException(status_code=400, detail="Token does not match the requested role.")
+             
+             # Consumed
+             cursor.execute("UPDATE invitations SET is_used = 1 WHERE token = ?", (request.invitation_token,))
+             
+        # Basic duplication check
+        if cursor.execute("SELECT id FROM students WHERE id = ?", (request.email,)).fetchone():
+             raise HTTPException(status_code=400, detail="User ID/Email already exists.")
+             
+        cursor.execute(
+            """
+            INSERT INTO students (id, name, grade, preferred_subject, attendance_rate, home_language, password, math_score, science_score, english_language_score, role)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                request.email, request.name, request.grade, request.preferred_subject, 
+                100.0, 'English', request.password, 
+                0.0, 0.0, 0.0, request.role
+            )
+        )
+        conn.commit()
+        log_auth_event(request.email, "Register Success", f"Role: {request.role}")
+        return {"message": "Registration successful", "user_id": request.email}
+    except sqlite3.IntegrityError:
+         log_auth_event(request.email, "Register Failed", "User ID already exists")
+         raise HTTPException(status_code=400, detail="User ID already exists.")
+    except Exception as e:
+        conn.rollback()
+        log_auth_event(request.email, "Register Failed", f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
+    finally:
+        conn.close()
+
+# --- RBAC CONFIGURATION ---
+ROLE_PERMISSIONS = {
+    "Admin": [
+        "view_dashboard", "manage_users", "manage_invitations", 
+        "view_all_grades", "edit_all_grades", 
+        "schedule_active_class", "manage_groups"
+    ],
+    "Teacher": [
+        "view_dashboard", "invite_students", 
+        "view_all_grades", "edit_all_grades", 
+        "schedule_active_class", "manage_groups"
+    ],
+    "Student": [
+        "view_dashboard", "view_own_grades", "join_active_class"
+    ],
+    "Parent": [
+        "view_dashboard", "view_child_grades"
+    ]
+}
+
+def check_permission(user_role: str, required_permission: str) -> bool:
+    if user_role not in ROLE_PERMISSIONS:
+        return False
+    return required_permission in ROLE_PERMISSIONS[user_role]
+
+
+
+from fastapi import Depends, Header
+
+async def verify_permission(permission: str, x_user_role: str = Header(None, alias="X-User-Role"), x_user_id: str = Header(None, alias="X-User-Id")):
+    """
+    Dependency to verify if the user has the required permission.
+    Expects X-User-Role and X-User-Id headers for simplicity in this MVP.
+    In a real app, this would decode a JWT or check the session.
+    """
+    if not x_user_role:
+        # Fallback: try to fetch from DB if only ID is provided (less performant but safer)
+        if x_user_id:
+            conn = get_db_connection()
+            user = conn.execute("SELECT role FROM students WHERE id = ?", (x_user_id,)).fetchone()
+            conn.close()
+            if user:
+                x_user_role = user['role']
+            else:
+                raise HTTPException(status_code=401, detail="User not found")
+        else:
+             raise HTTPException(status_code=401, detail="Authentication required")
+
+    if not check_permission(x_user_role, permission):
+        log_auth_event(x_user_id or "unknown", "Unauthorized Access", f"Missing permission: {permission}")
+        raise HTTPException(status_code=403, detail=f"Permission denied: {permission} required.")
+    
+    return True
+
+# --- LOGOUT ENDPOINT ---
+@app.post("/api/auth/logout")
+async def logout_user(request: LogoutRequest):
+    logger.info(f"Logout for user: {request.user_id}")
+    log_auth_event(request.user_id, "Logout", "User logged out")
+    return {"message": "Logged out successfully"}
+
+@app.get("/api/auth/permissions")
+async def get_role_permissions():
+    """Returns the Role-Permission mapping table."""
+    return ROLE_PERMISSIONS
+
+
+# --- SOCIAL LOGIN ENDPOINTS (FR-2) ---
+
+class SocialTokenRequest(BaseModel):
+    token: str
+
+@app.post("/api/auth/google-login", response_model=LoginResponse)
+async def google_login(request: SocialTokenRequest):
+    # In a real app, verify the Google Token here
+    # For now, we simulate a successful login/signup for a Google user
+    logger.info("Processing Google Login")
+    user_email = "google_user@example.com" # Simulated extraction from token
+    
+    # Check/Create user
+    conn = get_db_connection()
+    user = conn.execute("SELECT id FROM students WHERE id = ?", (user_email,)).fetchone()
+    
+    if not user:
+        # Auto-register
+        conn.execute("INSERT INTO students (id, name, grade, preferred_subject, attendance_rate, home_language, password, math_score, science_score, english_language_score) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                     (user_email, "Google User", 9, "Science", 100.0, "English", "social_login", 0.0, 0.0, 0.0))
+        conn.commit()
+        log_auth_event(user_email, "Register Success", "Google Auto-Register")
+    
+    conn.close()
+    
+    log_auth_event(user_email, "Login Success", "Google Login")
+    return LoginResponse(user_id=user_email, role='Student')
+
+@app.post("/api/auth/microsoft-login", response_model=LoginResponse)
+async def microsoft_login(request: SocialTokenRequest):
+    logger.info("Processing Microsoft Login")
+    user_email = "ms_user@example.com"
+    
+    conn = get_db_connection()
+    user = conn.execute("SELECT id FROM students WHERE id = ?", (user_email,)).fetchone()
+    
+    if not user:
+        conn.execute("INSERT INTO students (id, name, grade, preferred_subject, attendance_rate, home_language, password, math_score, science_score, english_language_score) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                     (user_email, "Microsoft User", 9, "Math", 100.0, "English", "social_login", 0.0, 0.0, 0.0))
+        conn.commit()
+        log_auth_event(user_email, "Register Success", "Microsoft Auto-Register")
+
+    conn.close()
+    
+    log_auth_event(user_email, "Login Success", "Microsoft Login")
+    return LoginResponse(user_id=user_email, role='Student')
+
+@app.post("/api/auth/social-login", response_model=LoginResponse)
+async def generic_social_login(request: GenericSocialRequest):
+    logger.info(f"Processing {request.provider} Login")
+    user_id = f"{request.provider.lower()}_user"
+    
+    conn = get_db_connection()
+    user = conn.execute("SELECT id FROM students WHERE id = ?", (user_id,)).fetchone()
+    
+    if not user:
+        conn.execute("INSERT INTO students (id, name, grade, preferred_subject, attendance_rate, home_language, password, math_score, science_score, english_language_score) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                     (user_id, f"{request.provider} User", 9, "General", 100.0, "English", "social_login", 0.0, 0.0, 0.0))
+        conn.commit()
+        log_auth_event(user_id, "Register Success", f"{request.provider} Auto-Register")
+
+    conn.close()
+    
+    log_auth_event(user_id, "Login Success", f"{request.provider} Login")
+    return LoginResponse(user_id=user_id, role='Student')
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+@app.post("/api/auth/forgot-password")
+async def forgot_password(request: ForgotPasswordRequest):
+    logger.info(f"Password reset requested for: {request.email}")
+    
+    conn = get_db_connection()
+    user = conn.execute("SELECT id FROM students WHERE id = ?", (request.email,)).fetchone()
+    
+    if user:
+        # Generate Token
+        import uuid
+        token = str(uuid.uuid4())
+        expires_at = (datetime.now() + timedelta(minutes=15)).isoformat()
+        
+        conn.execute("INSERT INTO password_resets (token, user_id, expires_at) VALUES (?, ?, ?)", 
+                     (token, request.email, expires_at))
+        conn.commit()
+        conn.close()
+        
+        link = f"http://127.0.0.1:8000/?reset_token={token}"
+        log_auth_event(request.email, "Password Reset Requested", f"Token generated (Dev Link: {link})")
+        
+        # DEV MODE: Returning the link directly so user can click it
+        return {
+            "message": "Reset link generated (DEV MODE).", 
+            "dev_link": link 
+        }
+    else:
+        conn.close()
+        log_auth_event(request.email, "Password Reset Requested", "User not found")
+        return {"message": "If an account exists, a reset link has been sent."}
+
+@app.post("/api/auth/reset-password")
+async def reset_password(request: ResetPasswordRequest):
+    conn = get_db_connection()
+    try:
+        # Verify Token
+        reset_entry = conn.execute("SELECT user_id, expires_at FROM password_resets WHERE token = ?", (request.token,)).fetchone()
+        
+        if not reset_entry:
+            raise HTTPException(status_code=400, detail="Invalid or expired reset token.")
+            
+        if datetime.now() > datetime.fromisoformat(reset_entry['expires_at']):
+            conn.execute("DELETE FROM password_resets WHERE token = ?", (request.token,))
+            conn.commit()
+            raise HTTPException(status_code=400, detail="Reset token has expired.")
+            
+        # Update Password
+        validate_password_strength(request.new_password)
+        conn.execute("UPDATE students SET password = ?, failed_login_attempts = 0, locked_until = NULL WHERE id = ?", (request.new_password, reset_entry['user_id']))
+        
+        # Invalidate Token
+        conn.execute("DELETE FROM password_resets WHERE token = ?", (request.token,))
+        conn.commit()
+        
+        log_auth_event(reset_entry['user_id'], "Password Reset Success", "Password updated via token & Account unlocked")
+        return {"message": "Password reset successfully. You can now login."}
+        
+    finally:
+        conn.close()
 
 # --- TEACHER DASHBOARD ---
 
 @app.get("/api/teacher/overview", response_model=TeacherOverviewResponse)
-async def get_teacher_overview():
+async def get_teacher_overview(
+    x_user_role: str = Header(None, alias="X-User-Role"),
+    x_user_id: str = Header(None, alias="X-User-Id")
+):
+    if not check_permission(x_user_role, "view_all_grades"):
+        # Log strictly
+        log_auth_event(x_user_id or "unknown", "Unauthorized Access", "Attempted to view teacher overview")
+        raise HTTPException(status_code=403, detail="Permission denied.")
+
     # Fetch all students including their initial scores
-    students_df = fetch_data_df("SELECT id, name, grade, preferred_subject, attendance_rate, home_language, math_score, science_score, english_language_score FROM students WHERE id != 'admin'")
+    students_df = fetch_data_df("SELECT id, name, grade, preferred_subject, attendance_rate, home_language, math_score, science_score, english_language_score FROM students WHERE role = 'Student'")
     
     if students_df.empty:
         return TeacherOverviewResponse(total_students=0, class_attendance_avg=0.0, class_score_avg=0.0, roster=[])
@@ -423,7 +877,18 @@ async def get_teacher_overview():
 # --- STUDENT MANAGEMENT (NEW CRUD ENDPOINTS) ---
 
 @app.post("/api/students/add", status_code=201)
-async def add_new_student(request: AddStudentRequest):
+async def add_new_student(
+    request: AddStudentRequest, 
+    x_user_role: str = Header(None, alias="X-User-Role"), 
+    x_user_id: str = Header(None, alias="X-User-Id")
+):
+    # RBAC Check: manage_users
+    if not check_permission(x_user_role, "manage_users") and not check_permission(x_user_role, "invite_students"):
+         # Allow teachers to add students too if they have 'invite_students' or similar, 
+         # but strict RBAC says 'manage_users'. Let's allow 'manage_users' (Admin) OR 'invite_students' (Teacher)
+         log_auth_event(x_user_id or "unknown", "Unauthorized Access", "Attempted to add student without permission")
+         raise HTTPException(status_code=403, detail="Permission denied. You cannot add students.")
+
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
@@ -446,8 +911,32 @@ async def add_new_student(request: AddStudentRequest):
         conn.close()
 
 
+@app.post("/api/invitations/generate", response_model=InvitationResponse)
+async def generate_invitation(request: InvitationRequest):
+    import uuid, datetime
+    token = str(uuid.uuid4())[:8]
+    expires_at = (datetime.datetime.now() + datetime.timedelta(hours=request.expiry_hours)).isoformat()
+    
+    conn = get_db_connection()
+    conn.execute("INSERT INTO invitations (token, role, expires_at) VALUES (?, ?, ?)", 
+                 (token, request.role, expires_at))
+    conn.commit()
+    conn.close()
+    
+    # In a real app, this would be a full URL
+    return InvitationResponse(link=f"?invite={token}", token=token, expires_at=expires_at)
+
 @app.put("/api/students/{student_id}")
-async def update_student(student_id: str, request: UpdateStudentRequest):
+async def update_student(
+    student_id: str, 
+    request: UpdateStudentRequest,
+    x_user_role: str = Header(None, alias="X-User-Role"),
+    x_user_id: str = Header(None, alias="X-User-Id")
+):
+    if not check_permission(x_user_role, "edit_all_grades"):
+        log_auth_event(x_user_id or "unknown", "Unauthorized Access", "Attempted to edit student without permission")
+        raise HTTPException(status_code=403, detail="Permission denied.")
+
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
@@ -471,6 +960,13 @@ async def update_student(student_id: str, request: UpdateStudentRequest):
                 student_id
             )
         )
+        
+        # Password Update logic
+        if request.password and request.password.strip():
+            validate_password_strength(request.password)
+            cursor.execute("UPDATE students SET password = ? WHERE id = ?", (request.password, student_id))
+            log_auth_event(student_id, "Password Changed", f"Admin/Teacher ({x_user_id}) updated password")
+
         conn.commit()
         return {"message": f"Student {student_id} updated successfully."}
     finally:
@@ -479,8 +975,8 @@ async def update_student(student_id: str, request: UpdateStudentRequest):
 
 @app.delete("/api/students/{student_id}")
 async def delete_student(student_id: str):
-    if student_id == 'admin':
-        raise HTTPException(status_code=403, detail="Cannot delete the admin user.")
+    if student_id == 'teacher':
+        raise HTTPException(status_code=403, detail="Cannot delete the teacher user.")
         
     conn = get_db_connection()
     try:
@@ -512,7 +1008,15 @@ async def delete_student(student_id: str):
 # --- ACTIVITY MANAGEMENT (NEW ENDPOINT) ---
 
 @app.post("/api/activities/add", status_code=201)
-async def add_new_activity(request: AddActivityRequest):
+async def add_new_activity(
+    request: AddActivityRequest,
+    x_user_role: str = Header(None, alias="X-User-Role"),
+    x_user_id: str = Header(None, alias="X-User-Id")
+):
+    if not check_permission(x_user_role, "edit_all_grades"):
+         log_auth_event(x_user_id or "unknown", "Unauthorized Access", "Attempted to add activity without permission")
+         raise HTTPException(status_code=403, detail="Permission denied.")
+
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
@@ -615,7 +1119,7 @@ async def chat_with_ai_tutor(student_id: str, request: AIChatRequest):
 
 @app.get("/api/students/all")
 async def get_all_students_list():
-    df = fetch_data_df("SELECT id, name, attendance_rate, grade FROM students WHERE id != 'admin'")
+    df = fetch_data_df("SELECT id, name, attendance_rate, grade FROM students WHERE role = 'Student'")
     return df.to_dict('records') 
 
 @app.get("/api/students/{student_id}/data", response_model=StudentDataResponse)
@@ -660,7 +1164,15 @@ async def get_student_data(student_id: str):
 # --- GROUP MANAGEMENT (NEW) ---
 
 @app.post("/api/groups", status_code=201)
-async def create_group(request: GroupCreateRequest):
+async def create_group(
+    request: GroupCreateRequest,
+    x_user_role: str = Header(None, alias="X-User-Role"),
+    x_user_id: str = Header(None, alias="X-User-Id")
+):
+    if not check_permission(x_user_role, "manage_groups"):
+         log_auth_event(x_user_id or "unknown", "Unauthorized Access", "Attempted to create group without permission")
+         raise HTTPException(status_code=403, detail="Permission denied.")
+
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
@@ -785,35 +1297,20 @@ class ClassStatusResponse(BaseModel):
 class StartClassRequest(BaseModel):
     meet_link: str
 
-# Global state for live class (Simple implementation)
-LIVE_CLASS_STATE = {
-    "is_active": False,
-    "meet_link": ""
-}
 
-@app.get("/class/status", response_model=ClassStatusResponse)
-async def get_class_status():
-    return ClassStatusResponse(
-        is_active=LIVE_CLASS_STATE["is_active"],
-        meet_link=LIVE_CLASS_STATE["meet_link"]
-    )
-
-@app.post("/class/start")
-async def start_class(request: StartClassRequest):
-    LIVE_CLASS_STATE["is_active"] = True
-    LIVE_CLASS_STATE["meet_link"] = request.meet_link
-    return {"message": "Class started"}
-
-@app.post("/class/end")
-async def end_class():
-    LIVE_CLASS_STATE["is_active"] = False
-    LIVE_CLASS_STATE["meet_link"] = ""
-    return {"message": "Class ended"}
 
 # --- LIVE CLASSES ENDPOINTS (NEW) ---
 
 @app.post("/api/classes/schedule", status_code=201)
-async def schedule_class(request: ClassScheduleRequest):
+async def schedule_class(
+    request: ClassScheduleRequest,
+    x_user_role: str = Header(None, alias="X-User-Role"),
+    x_user_id: str = Header(None, alias="X-User-Id")
+):
+    if not check_permission(x_user_role, "schedule_active_class"):
+         log_auth_event(x_user_id or "unknown", "Unauthorized Access", "Attempted to schedule class without permission")
+         raise HTTPException(status_code=403, detail="Permission denied.")
+
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
@@ -884,7 +1381,15 @@ class ClassSessionRequest(BaseModel):
     meet_link: str
 
 @app.post("/api/class/start")
-async def start_class(request: ClassSessionRequest):
+async def start_class(
+    request: ClassSessionRequest,
+    x_user_role: str = Header(None, alias="X-User-Role"),
+    x_user_id: str = Header(None, alias="X-User-Id")
+):
+    if not check_permission(x_user_role, "schedule_active_class"):
+         log_auth_event(x_user_id or "unknown", "Unauthorized Access", "Attempted to start class without permission")
+         raise HTTPException(status_code=403, detail="Permission denied.")
+
     CLASS_SESSION["is_active"] = True
     CLASS_SESSION["meet_link"] = request.meet_link
     return {"message": "Online class started successfully.", "link": request.meet_link}
