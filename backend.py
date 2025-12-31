@@ -560,12 +560,20 @@ async def verify_permission(permission: str, x_user_role: str = Header(None, ali
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root():
-    with open("index.html", "r", encoding="utf-8") as f:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(base_dir, "index.html")
+    if not os.path.exists(file_path):
+        return HTMLResponse(content="<h1>Error: index.html not found on server</h1>", status_code=500)
+    with open(file_path, "r", encoding="utf-8") as f:
         return f.read()
 
 @app.get("/script.js")
 async def read_script():
-    with open("script.js", "r", encoding="utf-8") as f:
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(base_dir, "script.js")
+    if not os.path.exists(file_path):
+        return Response(content="console.error('script.js not found');", media_type="text/javascript")
+    with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
     return Response(content=content, media_type="text/javascript")
 
