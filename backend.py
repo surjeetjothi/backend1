@@ -30,14 +30,7 @@ app = FastAPI(title="EdTech AI Portal API - Enhanced")
 # --- CORS Configuration ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://127.0.0.1:8000",
-        "http://localhost:8000",
-        "http://127.0.0.1:5500", # Common VS Code Live Server port
-        "http://localhost:5500",
-        "https://ed-tech-portal.vercel.app", # Vercel Frontend
-        "https://ed-tech-portal.vercel.app/" 
-    ], 
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -211,6 +204,13 @@ class ForgotPasswordRequest(BaseModel):
 
 class ClassSessionRequest(BaseModel):
     meet_link: str
+
+class AuditLogResponse(BaseModel):
+    id: int
+    user_id: str
+    event_type: str
+    timestamp: str
+    details: str
 
 # --- 3. DATABASE HELPER FUNCTIONS ---
 
@@ -746,6 +746,22 @@ async def logout_user(request: LogoutRequest):
     logger.info(f"Logout for user: {request.user_id}")
     log_auth_event(request.user_id, "Logout", "User logged out")
     return {"message": "Logged out successfully"}
+
+@app.get("/api/admin/audit-logs", response_model=List[AuditLogResponse])
+async def get_audit_logs(
+    x_user_role: str = Header(None, alias="X-User-Role"),
+    x_user_id: str = Header(None, alias="X-User-Id")
+):
+    # Strict RBAC Check for Admin only
+    if x_user_role != "Admin":
+         log_auth_event(x_user_id or "unknown", "Unauthorized Access", "Attempted to view audit logs")
+         raise HTTPException(status_code=403, detail="Permission denied. Admin access required.")
+
+    df = fetch_data_df("SELECT * FROM auth_logs ORDER BY timestamp DESC LIMIT 100")
+    if df.empty:
+        return []
+    
+    return df.to_dict('records')
 
 @app.get("/api/auth/permissions")
 async def get_role_permissions():
