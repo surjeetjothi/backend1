@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- FIX: Ensure Referrer matches Origin for Google OAuth -->
+    <meta name="referrer" content="no-referrer-when-downgrade">
+    <title>Noble Nexus Portal</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Inter:300,400,500,700&display=swap"
+        rel="stylesheet">
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- Microsoft Authentication Library (MSAL) -->
+    <script src="https://alcdn.msauth.net/browser/2.30.0/js/msal-browser.min.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-dark: #4338ca;
+            --sidebar-width: 280px;
+        }
+
+        body {
+            font-family: 'Inter', 'Roboto', sans-serif;
+            background-color: #f9fafb;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Custom Styles */
+        #sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 100;
+            background-color: #ffffff;
+            border-right: 1px solid #e5e7eb;
+            overflow-y: auto;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        #main-content {
+            margin-left: var(--sidebar-width);
+            padding: 2rem;
+            min-height: 100vh;
+            transition: margin-left 0.3s ease-in-out;
+            background-image: radial-gradient(#e5e7eb 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* Login Mode Styles */
+        body.login-mode {
+            background: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        body.login-mode #sidebar {
+            transform: translateX(-100%);
+        }
+
+        body.login-mode #main-content {
+            margin-left: 0;
+            width: 100%;
+            background: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+        }
+
+        #login-view {
+            max-width: 420px;
+            width: 100%;
+        }
+
+        /* Metric Cards */
+        .metric-card {
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid #e5e7eb;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary-color);
+        }
+
+        .metric-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, transparent 50%, rgba(79, 70, 229, 0.05) 50%);
+            border-radius: 0 0 0 100%;
+        }
+
+        /* Student Group Card */
+        .student-group-card {
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .student-group-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .live-class-banner {
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-red {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            }
+
+            70% {
+                transform: scale(1.01);
+                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+            }
+
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+            }
+        }
+
+        /* Chat Styles */
+        .chat-message {
+            border-radius: 12px;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            max-width: 80%;
+        }
+
+        .user-message {
+            background-color: var(--primary-color);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 2px;
+        }
+
+        .assistant-message {
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            margin-right: auto;
+            border-bottom-left-radius: 2px;
+        }
+
+        /* Utilities */
+        .text-primary-custom {
+            color: var(--primary-color);
+        }
+
+        .bg-primary-custom {
+            background-color: var(--primary-color);
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(to right, #4f46e5, #4338ca);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary-custom:hover {
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(79, 70, 229, 0.3);
+        }
+
+        /* Views Visibility */
+        .view {
+            display: none;
+        }
+
+        .view.active {
+            display: block;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hover-up {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .hover-up:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+
+<body class="login-mode">
+
+    <!-- Sidebar -->
+    <header id="sidebar" class="d-flex flex-column p-4">
+        <h1 class="h4 fw-bold text-primary-custom mb-4 d-flex align-items-center">
+            <span class="fs-2 me-2">🎓</span> Noble Nexus
+        </h1>
+
+        <div id="auth-status" class="alert alert-indigo bg-light border-start border-4 border-primary shadow-sm mb-4">
+            Login to continue...
+        </div>
+
+        <!-- FR-4: Invitation Generator (Only visible to Teachers) -->
+        <div id="invite-section" class="mb-4 d-none">
+            <h6 class="text-uppercase text-muted fw-bold small">Invite Users</h6>
+            <div class="input-group mb-2">
+                <select class="form-select form-select-sm" id="invite-role">
+                    <option value="Student">Student</option>
+                    <option value="Parent">Parent</option>
+                    <option value="Teacher">Teacher</option>
+                </select>
+                <button class="btn btn-sm btn-primary" onclick="generateInvite()">Generate</button>
+            </div>
+            <div id="invite-result" class="small text-break bg-light p-2 rounded border d-none"></div>
+        </div>
+
+        <div id="user-controls" class="flex-grow-1">
+            <div class="mb-3 border-bottom pb-3">
+                <label class="small text-muted fw-bold mb-1">Language / Location</label>
+                <select id="lang-toggle" class="form-select form-select-sm" onchange="switchLanguage(this.value)">
+                    <option value="en">🇺🇸 English</option>
+                    <option value="es">🇪🇸 Spanish</option>
+                    <option value="fr">🇫🇷 French</option>
+                </select>
+            </div>
+            <p class="text-muted small">Navigation controls will appear here.</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content">
+
+        <!-- Login View -->
+        <div id="login-view" class="view active">
+            <div class="card shadow-lg border-0 rounded-4"
+                style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px);">
+                <div class="card-body p-5 text-center">
+                    <div class="mb-3">
+                        <span class="material-icons text-primary-custom" style="font-size: 48px;">school</span>
+                    </div>
+                    <h2 class="fw-bold mb-2">Welcome to Noble Nexus</h2>
+                    <p class="text-muted mb-4">Sign in to the Noble Nexus Portal</p>
+
+                    <form id="login-form">
+                        <div class="form-floating mb-3 text-start">
+                            <input type="text" class="form-control" id="username" placeholder="Username" required>
+                            <label for="username">Username / Student ID</label>
+                        </div>
+                        <div class="form-floating mb-3 text-start">
+                            <input type="password" class="form-control" id="password" placeholder="Password" required>
+                            <label for="password">Password</label>
+                        </div>
+                        <div class="text-end mb-3">
+                            <a href="#" class="text-decoration-none small" data-bs-toggle="modal"
+                                data-bs-target="#forgotPasswordModal">Forgot Password?</a>
+                        </div>
+
+                        <p id="login-message" class="text-danger fw-medium min-h-20"></p>
+
+                        <button type="submit" class="btn btn-primary-custom w-100 py-3 fw-bold rounded-3 mb-3">Sign
+                            In</button>
+
+                        <div class="d-flex align-items-center mb-3">
+                            <hr class="flex-grow-1">
+                            <span class="mx-2 text-muted small">OR</span>
+                            <hr class="flex-grow-1">
+                        </div>
+
+                        <!-- FR-2: Real Google Button Container -->
+                        <div id="g_id_onload"
+                            data-client_id="365152229186-a9av353n3vhpavimmo9q1qgdm78g9k5f.apps.googleusercontent.com"
+                            data-context="signin" data-ux_mode="popup" data-callback="handleCredentialResponse"
+                            data-auto_prompt="false">
+                        </div>
+
+                        <div class="g_id_signin w-100 mb-2" data-type="standard" data-shape="rectangular"
+                            data-theme="outline" data-text="sign_in_with" data-size="large" data-logo_alignment="left">
+                        </div>
+
+                        <button type="button"
+                            class="btn btn-outline-dark w-100 d-flex align-items-center justify-content-center gap-2"
+                            onclick="handleSocialLogin('Microsoft')">
+                            <img src="https://cdn-icons-png.flaticon.com/512/732/732221.png" width="20" height="20">
+                            Sign in with Microsoft
+                        </button>
+                    </form>
+
+                    <div class="mt-4 text-muted small">
+                        <p>New User? <a href="#" onclick="showRegister(event)" class="text-primary-custom fw-bold">Sign
+                                Up</a></p>
+                        <p>Need help? Contact support</p>
+                    </div>
+
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Registration View -->
+        <div id="register-view" class="view">
+            <div class="card shadow-lg border-0 rounded-4"
+                style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(20px); max-width: 500px; width: 100%;">
+                <div class="card-body p-5 text-center">
+                    <div class="mb-3">
+                        <span class="material-icons text-primary-custom" style="font-size: 48px;">person_add</span>
+                    </div>
+                    <h2 class="fw-bold mb-2">Create Account</h2>
+                    <p class="text-muted mb-4">Join Noble Nexus Today</p>
+
+                    <form id="register-form">
+                        <div class="form-floating mb-3 text-start">
+                            <input type="text" class="form-control" id="reg-name" placeholder="Full Name" required>
+                            <label for="reg-name">Full Name</label>
+                        </div>
+
+                        <!-- FR-3: Role Selection -->
+                        <div class="form-floating mb-3 text-start">
+                            <select class="form-select" id="reg-role" required onchange="handleRoleChange()">
+                                <option value="Student" selected>Student</option>
+                                <option value="Parent">Parent</option>
+                                <option value="Teacher">Teacher (Invite Only)</option>
+                            </select>
+                            <label for="reg-role">I am a...</label>
+                        </div>
+
+                        <!-- FR-4: Invitation Code -->
+                        <div class="form-floating mb-3 text-start">
+                            <input type="text" class="form-control" id="reg-invite"
+                                placeholder="Invitation Code (Optional)">
+                            <label for="reg-invite">Invitation Code (Optional)</label>
+                        </div>
+
+                        <div class="form-floating mb-3 text-start">
+                            <input type="text" class="form-control" id="reg-email" placeholder="Email / ID" required>
+                            <label for="reg-email">Email / Student ID</label>
+                        </div>
+                        <div class="form-floating mb-3 text-start">
+                            <input type="password" class="form-control" id="reg-password" placeholder="Password"
+                                required oninput="checkPasswordStrength(this.value)">
+                            <label for="reg-password">Password</label>
+                        </div>
+                        <div id="password-strength-msg" class="small mb-3 ms-1 fw-bold text-muted"></div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <div class="form-floating">
+                                    <input type="number" class="form-control" id="reg-grade" placeholder="Grade" min="1"
+                                        max="12" value="9" required>
+                                    <label for="reg-grade">Grade</label>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-floating">
+                                    <select class="form-select" id="reg-subject" required>
+                                        <option value="General">General</option>
+                                        <option value="Math">Math</option>
+                                        <option value="Science">Science</option>
+                                        <option value="English">English</option>
+                                    </select>
+                                    <label for="reg-subject">Fav Subject</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p id="register-message" class="text-danger fw-medium min-h-20"></p>
+
+                        <button type="submit" class="btn btn-primary-custom w-100 py-3 fw-bold rounded-3 mb-3">Sign
+                            Up</button>
+
+                        <div class="mt-4 text-muted small">
+                            <p>Already have an account? <a href="#" onclick="showLogin(event)"
+                                    class="text-primary-custom fw-bold">Login</a></p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teacher Dashboard View -->
+        <div id="teacher-view" class="view">
+            <h2 class="mb-4 fw-bold">🏫 Teacher's Overview</h2>
+
+            <!-- Schedule Button -->
+            <button id="open-schedule-modal-btn"
+                class="btn btn-purple shadow-sm mb-4 d-flex align-items-center gap-2 text-white"
+                style="background-color: #673ab7; border:none;" data-bs-toggle="modal"
+                data-bs-target="#scheduleClassModal">
+                <span class="material-icons">videocam</span> Schedule Live Class (Google Meet)
+            </button>
+
+            <!-- Live Class Controls -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h3 class="h5 text-secondary fw-bold mb-3">Live Class Controls</h3>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><span class="material-icons">link</span></span>
+                        <input type="url" id="meet-link-input" class="form-control" placeholder="Google Meet Link">
+                        <button id="start-class-btn" class="btn btn-success" onclick="startClass()">Start Class</button>
+                        <button id="end-class-btn" class="btn btn-danger" onclick="endClass()">End Class</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metrics -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h3 class="h5 text-secondary fw-bold mb-3">Class Summary Metrics</h3>
+                    <div id="teacher-metrics" class="row g-4">
+                        <!-- Metrics injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Roster -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h3 class="h5 text-secondary fw-bold mb-3">Class Roster & Performance</h3>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr id="roster-header">
+                                    <!-- Header injected via JS -->
+                                </tr>
+                            </thead>
+                            <tbody id="roster-table">
+                                <!-- Rows injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h3 class="h5 text-secondary fw-bold mb-3">Performance Distribution</h3>
+                    <div id="class-performance-chart" style="height: 350px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Groups Management View -->
+        <div id="groups-view" class="view">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold">👥 Class Groups</h2>
+                <button class="btn btn-primary-custom" data-bs-toggle="modal" data-bs-target="#createGroupModal">
+                    <span class="material-icons align-middle fs-5 me-1">add</span> Create Group
+                </button>
+            </div>
+            <div id="groups-list" class="row g-4">
+                <!-- Group cards injected here -->
+            </div>
+        </div>
+
+        <!-- ADMIN VIEW -->
+        <div id="admin-view" class="view">
+            <h2 class="fw-bold mb-4">🛡️ Admin Dashboard</h2>
+
+            <!-- Audit Logs -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-light border-bottom-0 fw-bold">
+                    <span class="material-icons align-middle me-2">history</span> Security Audit Logs
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 400px;">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th>Time</th>
+                                    <th>User</th>
+                                    <th>Event</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="audit-log-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PARENT VIEW -->
+        <div id="parent-view" class="view">
+            <h2 class="fw-bold mb-4">👨‍👩‍👧 Parent Portal</h2>
+            <div class="alert alert-info d-flex align-items-center mb-4">
+                <span class="material-icons me-2">info</span>
+                Viewing progress for your child: <strong id="parent-child-name" class="ms-2">Loading...</strong>
+            </div>
+
+            <!-- Parent Metrics -->
+            <div id="parent-metrics" class="row g-4 mb-4">
+                <!-- Injected via JS -->
+            </div>
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3">Activity History</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Topic</th>
+                                    <th>Score</th>
+                                </tr>
+                            </thead>
+                            <tbody id="parent-history-table"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student View -->
+        <div id="student-view" class="view">
+            <h2 id="student-name-header" class="mb-4 fw-bold">Student Dashboard</h2>
+
+            <!-- Metrics -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h3 class="h5 text-secondary fw-bold mb-3">Student Key Metrics</h3>
+                    <div id="student-metrics" class="row g-4">
+                        <!-- Metrics injected here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Classes -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h3 class="h5 text-danger fw-bold mb-3 d-flex align-items-center">
+                        <span class="material-icons me-2">live_tv</span> Upcoming Live Classes
+                    </h3>
+                    <div id="live-classes-list">
+                        <p class="text-muted">No live classes scheduled.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Live Banner -->
+            <div id="student-live-banner"
+                class="live-class-banner text-white p-3 rounded-3 mb-4 d-none justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2 fw-bold">
+                    <span class="spinner-grow spinner-grow-sm bg-white" role="status"></span>
+                    LIVE CLASS IN SESSION
+                </div>
+                <a id="student-join-link" href="#" target="_blank" class="btn btn-light text-danger fw-bold">JOIN
+                    NOW</a>
+            </div>
+
+            <!-- Student Groups (Subject Hubs) -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h3 class="h5 text-primary-custom fw-bold mb-3 d-flex align-items-center">
+                        <span class="material-icons me-2">class</span> My Subject Groups
+                    </h3>
+                    <div id="student-groups-list" class="row g-3">
+                        <p class="text-muted small">You are not part of any groups yet.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommendation Box -->
+            <div id="recommendation-box" class="alert alert-info border-start border-4 border-info shadow-sm mb-4"
+                style="display:none;"></div>
+
+            <!-- Progress & History Tabs -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+                    <ul class="nav nav-tabs card-header-tabs" id="studentTabs" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active fw-bold text-dark" id="progress-tab-btn" data-bs-toggle="tab"
+                                data-bs-target="#progress-tab-pane" type="button">📈 Progress Graph</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link fw-bold text-muted" id="history-tab-btn" data-bs-toggle="tab"
+                                data-bs-target="#history-tab-pane" type="button">📜 Activity History</button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body p-4">
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="progress-tab-pane" role="tabpanel">
+                            <div id="student-progress-chart" style="height: 350px;"></div>
+                        </div>
+                        <div class="tab-pane fade" id="history-tab-pane" role="tabpanel">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <tbody id="history-table"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Chat -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <h3 class="h5 text-secondary fw-bold mb-3">💬 AI Tutor Chat (Simulated)</h3>
+                    <div id="chat-messages" class="bg-light border rounded-3 p-3 mb-3 overflow-auto"
+                        style="height: 300px;"></div>
+                    <form id="chat-form" class="d-flex gap-2">
+                        <input type="text" id="chat-input" class="form-control"
+                            placeholder="Ask about performance or curriculum..." required>
+                        <button type="submit" class="btn btn-primary-custom">Send</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modals -->
+
+    <!-- Add Student Modal -->
+    <div class="modal fade" id="addStudentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title fw-bold text-primary-custom">➕ Add New Student</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body px-5 pb-5">
+                    <p id="add-student-message" class="text-primary fw-medium"></p>
+                    <form id="add-student-form" class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Student ID</label>
+                            <input type="text" class="form-control" id="new-id" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Full Name</label>
+                            <input type="text" class="form-control" id="new-name" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Default Password</label>
+                            <input type="text" class="form-control" id="new-password" value="123" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Grade</label>
+                            <input type="number" class="form-control" id="new-grade" min="1" max="12" value="9"
+                                required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Preferred Subject</label>
+                            <select class="form-select" id="new-subject" required>
+                                <option value="Math">Math</option>
+                                <option value="Science">Science</option>
+                                <option value="English">English</option>
+                                <option value="Physics">Physics</option>
+                                <option value="Chemistry">Chemistry</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Home Language</label>
+                            <input type="text" class="form-control" id="new-lang" value="English" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-bold">Attendance Rate (%)</label>
+                            <input type="number" class="form-control" id="new-attendance" min="0" max="100" step="0.1"
+                                value="90.0" required>
+                        </div>
+
+                        <div class="col-12 mt-4">
+                            <h6 class="border-bottom pb-2">Initial Assessment Scores (%)</h6>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Math Score</label>
+                            <input type="number" class="form-control" id="new-math-score" min="0" max="100" step="0.1"
+                                value="75.0" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Science Score</label>
+                            <input type="number" class="form-control" id="new-science-score" min="0" max="100"
+                                step="0.1" value="75.0" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">English Score</label>
+                            <input type="number" class="form-control" id="new-english-score" min="0" max="100"
+                                step="0.1" value="75.0" required>
+                        </div>
+
+                        <div class="col-12 mt-4">
+                            <button type="submit" class="btn btn-primary-custom w-100 py-2">Add Student to
+                                Roster</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Student Modal (Revamped) -->
+    <div class="modal fade" id="editStudentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="modal-header bg-gradient-primary-to-secondary text-white border-bottom-0 p-4"
+                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div>
+                        <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+                            <span class="material-icons">edit_note</span> Edit Student Profile
+                        </h5>
+                        <p class="mb-0 small opacity-75">Update student details and performance metrics</p>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        id="close-edit-modal"></button>
+                </div>
+
+                <div class="modal-body p-0">
+                    <p id="edit-student-message" class="text-center fw-medium p-2 mb-0 bg-light border-bottom d-none">
+                    </p>
+
+                    <form id="edit-student-form">
+                        <input type="hidden" id="edit-id">
+
+                        <!-- Tabs -->
+                        <ul class="nav nav-tabs nav-fill bg-light px-3 pt-3 border-bottom-0" id="editStudentTabs"
+                            role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active fw-bold py-3" id="edit-profile-tab" data-bs-toggle="tab"
+                                    data-bs-target="#edit-profile" type="button" role="tab" aria-selected="true">
+                                    <span class="material-icons align-middle fs-5 me-1">person</span> Profile
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link fw-bold py-3" id="edit-academic-tab" data-bs-toggle="tab"
+                                    data-bs-target="#edit-academic" type="button" role="tab" aria-selected="false">
+                                    <span class="material-icons align-middle fs-5 me-1">school</span> Academic
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content p-4" id="editStudentTabContent">
+
+                            <div class="tab-pane fade show active" id="edit-profile" role="tabpanel">
+                                <div class="alert alert-light border d-flex align-items-center gap-3 mb-4">
+                                    <div class="bg-primary-subtle rounded-circle p-3 text-primary">
+                                        <span class="material-icons fs-3">badge</span>
+                                    </div>
+                                    <div>
+                                        <small class="text-uppercase text-muted fw-bold">Student ID</small>
+                                        <h5 class="mb-0 fw-bold" id="edit-id-display">--</h5>
+                                    </div>
+                                </div>
+
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" id="edit-name" placeholder="Full Name"
+                                        required>
+                                    <label for="edit-name">Full Name</label>
+                                </div>
+
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control" id="edit-password"
+                                        placeholder="New Password (Optional)">
+                                    <label for="edit-password">New Password (Optional)</label>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="text" class="form-control" id="edit-lang"
+                                                placeholder="Home Language" required>
+                                            <label for="edit-lang">Home Language</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12 mb-3" id="edit-role-container" style="display:none;">
+                                        <label class="form-label fw-bold text-danger small text-uppercase">System Role
+                                            (Admin Only)</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white"><span
+                                                    class="material-icons fs-5 text-danger">admin_panel_settings</span></span>
+                                            <select class="form-select" id="edit-role">
+                                                <option value="Student">Student</option>
+                                                <option value="Teacher">Teacher</option>
+                                                <option value="Parent">Parent</option>
+                                                <option value="Admin">Admin</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating">
+                                            <input type="number" class="form-control" id="edit-attendance" min="0"
+                                                max="100" step="0.1" required>
+                                            <label for="edit-attendance">Attendance (%)</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tab 2: Academic & Scores -->
+                            <div class="tab-pane fade" id="edit-academic" role="tabpanel">
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-muted small text-uppercase">Current
+                                            Grade</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white"><span
+                                                    class="material-icons fs-5 text-muted">grade</span></span>
+                                            <input type="number" class="form-control" id="edit-grade" min="1" max="12"
+                                                required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold text-muted small text-uppercase">Preferred
+                                            Subject</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-white"><span
+                                                    class="material-icons fs-5 text-muted">auto_stories</span></span>
+                                            <select class="form-select" id="edit-subject" required>
+                                                <option value="Math">Math</option>
+                                                <option value="Science">Science</option>
+                                                <option value="English">English</option>
+                                                <option value="Physics">Physics</option>
+                                                <option value="Chemistry">Chemistry</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <h6 class="fw-bold border-bottom pb-2 mb-3 text-primary-custom">
+                                    <span class="material-icons align-middle fs-6 me-1">analytics</span> Initial
+                                    Assessment Scores
+                                </h6>
+
+                                <div class="mb-3">
+                                    <label class="form-label d-flex justify-content-between">
+                                        <span>Math Score</span>
+                                        <span class="fw-bold text-primary" id="lbl-math">0%</span>
+                                    </label>
+                                    <input type="range" class="form-range" id="rng-math" min="0" max="100" step="0.5"
+                                        oninput="document.getElementById('edit-math-score').value=this.value; document.getElementById('lbl-math').textContent=this.value+'%'">
+                                    <input type="number" class="form-control" id="edit-math-score" min="0" max="100"
+                                        step="0.1" required
+                                        oninput="document.getElementById('rng-math').value=this.value; document.getElementById('lbl-math').textContent=this.value+'%'">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label d-flex justify-content-between">
+                                        <span>Science Score</span>
+                                        <span class="fw-bold text-primary" id="lbl-science">0%</span>
+                                    </label>
+                                    <input type="range" class="form-range" id="rng-science" min="0" max="100" step="0.5"
+                                        oninput="document.getElementById('edit-science-score').value=this.value; document.getElementById('lbl-science').textContent=this.value+'%'">
+                                    <input type="number" class="form-control" id="edit-science-score" min="0" max="100"
+                                        step="0.1" required
+                                        oninput="document.getElementById('rng-science').value=this.value; document.getElementById('lbl-science').textContent=this.value+'%'">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label d-flex justify-content-between">
+                                        <span>English Score</span>
+                                        <span class="fw-bold text-primary" id="lbl-english">0%</span>
+                                    </label>
+                                    <input type="range" class="form-range" id="rng-english" min="0" max="100" step="0.5"
+                                        oninput="document.getElementById('edit-english-score').value=this.value; document.getElementById('lbl-english').textContent=this.value+'%'">
+                                    <input type="number" class="form-control" id="edit-english-score" min="0" max="100"
+                                        step="0.1" required
+                                        oninput="document.getElementById('rng-english').value=this.value; document.getElementById('lbl-english').textContent=this.value+'%'">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer border-top-0 bg-light px-4 py-3">
+                            <button type="button" class="btn btn-outline-secondary px-4"
+                                data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary-custom px-4 fw-bold"
+                                onclick="submitEditStudentForm()">
+                                <span class="material-icons align-middle fs-5 me-1">save</span> Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteConfirmationModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">⚠️ Delete Student</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="delete-modal-text" class="fw-bold">Are you sure?</p>
+                    <p class="small text-muted mb-0">This action cannot be undone. All student data and activity history
+                        will be erased permenantly.</p>
+                    <div id="delete-error-msg" class="text-danger mt-2 fw-bold small"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" id="confirm-delete-btn">Permanently Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Group Modal -->
+    <div class="modal fade" id="createGroupModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title fw-bold text-primary-custom">🆕 Create New Group</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body px-4 pb-4">
+                    <p id="create-group-message" class="text-primary fw-medium"></p>
+                    <form id="create-group-form">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Group Name</label>
+                            <input type="text" class="form-control" id="group-name" required
+                                placeholder="e.g. Science Club">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Subject</label>
+                            <select class="form-select" id="group-subject">
+                                <option value="General">General</option>
+                                <option value="Math">Math</option>
+                                <option value="Science">Science</option>
+                                <option value="Physics">Physics</option>
+                                <option value="Chemistry">Chemistry</option>
+                                <option value="English">English</option>
+                                <option value="History">History</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Description</label>
+                            <textarea class="form-control" id="group-desc" rows="2"
+                                placeholder="Optional description"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary-custom w-100">Create Group</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Group Modal (Members & Materials) -->
+    <div class="modal fade" id="manageMembersModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title fw-bold text-primary-custom" id="manage-group-title">👥 Manage Group</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body px-4 pb-4">
+                    <h6 id="manage-group-name" class="fw-bold mb-3 d-none"></h6>
+                    <input type="hidden" id="manage-group-id">
+
+                    <!-- Tabs -->
+                    <ul class="nav nav-tabs mb-3" id="manageGroupTabs" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active" id="tab-members-btn" data-bs-toggle="tab"
+                                data-bs-target="#tab-members" type="button">Members</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" id="tab-materials-btn" data-bs-toggle="tab"
+                                data-bs-target="#tab-materials" type="button">Materials & Resources</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="manageGroupTabContent">
+                        <!-- Members Tab -->
+                        <div class="tab-pane fade show active" id="tab-members" role="tabpanel">
+                            <div class="border rounded p-2 mb-3" style="max-height: 250px; overflow-y: auto;">
+                                <div id="group-members-list">Loading...</div>
+                            </div>
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="button" class="btn btn-outline-danger" onclick="deleteGroup()">Delete
+                                    Group</button>
+                                <button type="button" class="btn btn-primary-custom" onclick="saveGroupMembers()">Save
+                                    Members</button>
+                            </div>
+                        </div>
+
+                        <!-- Materials Tab -->
+                        <div class="tab-pane fade" id="tab-materials" role="tabpanel">
+                            <!-- Add Material Form -->
+                            <div class="card bg-light border-0 mb-3">
+                                <div class="card-body">
+                                    <h6 class="fw-bold mb-2">Post New Material</h6>
+                                    <form id="add-material-form" onsubmit="handlePostMaterial(event)">
+                                        <div class="row g-2">
+                                            <div class="col-md-8">
+                                                <input type="text" class="form-control form-control-sm" id="mat-title"
+                                                    placeholder="Title (e.g. Chapter 1 Notes)" required>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <select class="form-select form-select-sm" id="mat-type">
+                                                    <option value="Note">Note / Text</option>
+                                                    <option value="Quiz">Quiz Link</option>
+                                                    <option value="Video">Video Link</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-12">
+                                                <input type="text" class="form-control form-control-sm" id="mat-content"
+                                                    placeholder="Content or URL..." required>
+                                            </div>
+                                            <div class="col-12 text-end">
+                                                <button type="submit"
+                                                    class="btn btn-sm btn-primary-custom">Post</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- Materials List -->
+                            <h6 class="fw-bold">Posted Resources</h6>
+                            <div id="group-materials-list" class="list-group list-group-flush"
+                                style="max-height: 200px; overflow-y: auto;">
+                                <!-- Items injected here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Activity Modal -->
+    <div class="modal fade" id="addActivityModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title fw-bold text-primary-custom">➕ Log New Activity</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" id="close-activity-modal"></button>
+                </div>
+                <div class="modal-body px-4 pb-4">
+                    <p id="add-activity-message" class="text-primary fw-medium"></p>
+                    <form id="add-activity-form" class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Select Student</label>
+                            <select class="form-select" id="activity-student-select" required></select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Date</label>
+                            <input type="date" class="form-control" id="activity-date" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Topic</label>
+                            <input type="text" class="form-control" id="activity-topic"
+                                placeholder="e.g., Quadratic Equations" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Difficulty</label>
+                            <select class="form-select" id="activity-difficulty" required>
+                                <option value="Easy">Easy</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Hard">Hard</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Score (%)</label>
+                            <input type="number" class="form-control" id="activity-score" min="0" max="100" step="0.1"
+                                value="85.0" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Time (min)</label>
+                            <input type="number" class="form-control" id="activity-time" min="1" value="30" required>
+                        </div>
+                        <div class="col-12 mt-4">
+                            <button type="submit" class="btn btn-primary-custom w-100 py-2">Log Activity</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule Class Modal -->
+    <div class="modal fade" id="scheduleClassModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title fw-bold text-primary-custom">📅 Schedule Live Class</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" id="close-schedule-modal"></button>
+                </div>
+                <div class="modal-body px-4 pb-4">
+                    <p id="schedule-message" class="text-primary fw-medium"></p>
+                    <form id="schedule-class-form" class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Topic / Subject</label>
+                            <input type="text" class="form-control" id="class-topic"
+                                placeholder="e.g., Math Doubt Session" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Date & Time</label>
+                            <input type="datetime-local" class="form-control" id="class-date" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Target Students</label>
+
+                            <!-- Group Filter -->
+                            <div class="input-group mb-2">
+                                <label class="input-group-text bg-white small">Filter by Group</label>
+                                <select class="form-select" id="schedule-group-filter"
+                                    onchange="applyGroupFilter(this.value)">
+                                    <option value="">-- All Students --</option>
+                                    <!-- Options injected via JS -->
+                                </select>
+                            </div>
+
+                            <div class="border rounded p-2"
+                                style="max-height: 120px; overflow-y: auto; background: #f8f9fa;">
+                                <div class="form-check mb-2 pb-2 border-bottom">
+                                    <input class="form-check-input" type="checkbox" id="select-all-students"
+                                        onchange="toggleStudentCheckboxes(this)">
+                                    <label class="form-check-label fw-bold" for="select-all-students">Select All</label>
+                                </div>
+                                <div id="schedule-student-list">
+                                    <!-- Checkboxes -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Google Meet Link</label>
+                            <input type="url" class="form-control" id="class-link"
+                                placeholder="https://meet.google.com/..." required>
+                            <div class="form-text">Copy paste a link from <a href="https://meet.google.com/"
+                                    target="_blank">Google Meet</a>.</div>
+                        </div>
+                        <div class="col-12 mt-4">
+                            <button type="submit" class="btn text-white w-100 py-2"
+                                style="background-color: #673ab7;">Schedule Class</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Group Content Modal -->
+    <div class="modal fade" id="studentGroupModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-bottom-0">
+                    <div>
+                        <h5 class="modal-title fw-bold text-primary-custom" id="sg-title">Group Name</h5>
+                        <p class="mb-0 text-muted small" id="sg-desc">Group Description</p>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body px-4 pb-4">
+                    <h6 class="fw-bold border-bottom pb-2 mb-3">📚 Class Materials & Resources</h6>
+                    <div id="student-materials-list" class="list-group list-group-flush">
+                        <!-- Materials injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Portal Modal (Revamped) -->
+    <div class="modal fade" id="aboutPortalModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                <!-- Header with Gradient -->
+                <div class="modal-header border-bottom-0 text-white p-5 position-relative"
+                    style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);">
+                    <div class="position-relative z-1">
+                        <h2 class="fw-bold mb-2 d-flex align-items-center gap-3">
+                            <span class="bg-white text-primary rounded-circle p-2 d-flex"><span
+                                    class="material-icons">school</span></span>
+                            Noble Nexus Portal
+                        </h2>
+                        <p class="lead mb-0 opacity-75">Empowering the next generation of learners with AI.</p>
+                    </div>
+                    <!-- Decorative Circle -->
+                    <div class="position-absolute top-0 end-0 rounded-circle bg-white opacity-10"
+                        style="width: 200px; height: 200px; transform: translate(30%, -30%);"></div>
+                    <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-4"
+                        data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body p-5">
+                    <div class="row g-4">
+                        <!-- Feature 1 -->
+                        <div class="col-md-4">
+                            <div class="p-4 rounded-4 h-100 text-center hover-up transition-all"
+                                style="background: #f3f4f6;">
+                                <div class="mb-3 text-primary">
+                                    <span class="material-icons" style="font-size: 48px;">insights</span>
+                                </div>
+                                <h5 class="fw-bold mb-2">Smart Analytics</h5>
+                                <p class="text-muted small mb-0">Deep insights into student performance using advanced
+                                    machine learning models.</p>
+                            </div>
+                        </div>
+
+                        <!-- Feature 2 -->
+                        <div class="col-md-4">
+                            <div class="p-4 rounded-4 h-100 text-center hover-up transition-all"
+                                style="background: #f3f4f6;">
+                                <div class="mb-3 text-danger">
+                                    <span class="material-icons" style="font-size: 48px;">videocam</span>
+                                </div>
+                                <h5 class="fw-bold mb-2">Live Classrooms</h5>
+                                <p class="text-muted small mb-0">Seamlessly schedule and join Google Meet sessions
+                                    directly from the dashboard.</p>
+                            </div>
+                        </div>
+
+                        <!-- Feature 3 -->
+                        <div class="col-md-4">
+                            <div class="p-4 rounded-4 h-100 text-center hover-up transition-all"
+                                style="background: #f3f4f6;">
+                                <div class="mb-3 text-success">
+                                    <span class="material-icons" style="font-size: 48px;">auto_awesome</span>
+                                </div>
+                                <h5 class="fw-bold mb-2">AI Guidance</h5>
+                                <p class="text-muted small mb-0">Personalized recommendations and study paths tailored
+                                    to each student.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 text-center border-top pt-4">
+                        <p class="text-muted small mb-3">Version 2.0.0 • Built for Excellence</p>
+                        <button class="btn btn-outline-primary px-4 rounded-pill fw-bold" data-bs-dismiss="modal">Close
+                            Overview</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div class="modal fade" id="forgotPasswordModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title fw-bold text-primary-custom">Reset Password</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body px-5 pb-5">
+                    <p class="text-muted small mb-4">Enter your email address and we'll send you a link to reset your
+                        password.</p>
+                    <form id="forgot-password-form">
+                        <div class="form-floating mb-3">
+                            <input type="email" class="form-control" id="reset-email" placeholder="Email" required>
+                            <label for="reset-email">Email Address</label>
+                        </div>
+                        <p id="reset-message" class="text-center fw-medium small mb-2"></p>
+                        <button type="submit" class="btn btn-primary-custom w-100 py-2">Send Reset Link</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Password Modal (New Password Entry) -->
+    <div class="modal fade" id="resetPasswordModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-bottom-0 bg-primary-custom text-white">
+                    <h5 class="modal-title fw-bold">🔐 Set New Password</h5>
+                </div>
+                <div class="modal-body px-5 py-5">
+                    <p class="text-center text-muted mb-4">Please enter your new password below.</p>
+                    <form id="reset-password-form">
+                        <input type="hidden" id="reset-token">
+                        <div class="form-floating mb-3">
+                            <input type="password" class="form-control" id="new-reset-pass" placeholder="New Password"
+                                required oninput="checkPasswordStrength(this.value)">
+                            <label for="new-reset-pass">New Password</label>
+                        </div>
+
+                        <p id="new-reset-message" class="text-center fw-medium small mb-2"></p>
+                        <button type="submit" class="btn btn-primary-custom w-100 py-2 fw-bold">Update Password</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
