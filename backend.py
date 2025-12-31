@@ -30,7 +30,14 @@ app = FastAPI(title="EdTech AI Portal API - Enhanced")
 # --- CORS Configuration ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=[
+        "http://127.0.0.1:8000",
+        "http://localhost:8000",
+        "http://127.0.0.1:5500", # Common VS Code Live Server port
+        "http://localhost:5500",
+        "https://ed-tech-portal.vercel.app", # Vercel Frontend
+        "https://ed-tech-portal.vercel.app/" 
+    ], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
