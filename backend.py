@@ -564,32 +564,9 @@ async def read_root():
     file_path = os.path.join(base_dir, "index.html")
     
     if not os.path.exists(file_path):
-        # DEBUGGING: Help the user see what files ARE present
-        try:
-            files = os.listdir(base_dir)
-            files_str = "<br>".join(files)
-            location = f"Looking in: {base_dir}"
-        except Exception as e:
-            files_str = f"Could not list files: {e}"
-            location = "Unknown dir"
-            
-        return HTMLResponse(
-            content=f"""
-            <html>
-                <body>
-                    <h1 style='color: red;'>Critical Deployment Error</h1>
-                    <h3>'index.html' is missing from the server.</h3>
-                    <p><strong>This means you did not upload/push index.html to GitHub/Render.</strong></p>
-                    <hr>
-                    <p><strong>Server Diagnostic Info:</strong></p>
-                    <p>{location}</p>
-                    <p><strong>Files actually present on this server:</strong></p>
-                    <pre>{files_str}</pre>
-                </body>
-            </html>
-            """, 
-            status_code=500
-        )
+        # In production, this means the file wasn't uploaded.
+        logger.error(f"File not found: {file_path}")
+        return HTMLResponse(content="Error: index.html not found on server.", status_code=500)
         
     with open(file_path, "r", encoding="utf-8") as f:
         return f.read()
