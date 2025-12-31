@@ -571,9 +571,16 @@ async def read_root():
     file_path = os.path.join(base_dir, "index.html")
     
     if not os.path.exists(file_path):
-        # In production, this means the file wasn't uploaded.
-        logger.error(f"File not found: {file_path}")
-        return HTMLResponse(content="Error: index.html not found on server.", status_code=500)
+        # Graceful Fallback: If index.html is missing (e.g. separate frontend), just show API status
+        return HTMLResponse(content="""
+            <html>
+                <body style="font-family: sans-serif; text-align: center; padding-top: 50px;">
+                    <h1 style="color: #4CAF50;">Noble Nexus API is Running 🚀</h1>
+                    <p>The backend is online and accepting requests.</p>
+                    <p>Please access the application via your <strong>Vercel Frontend</strong>.</p>
+                </body>
+            </html>
+        """, status_code=200)
         
     with open(file_path, "r", encoding="utf-8") as f:
         return f.read()
