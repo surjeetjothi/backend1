@@ -1,5 +1,7 @@
 // --- CONFIGURATION ---
-const API_BASE_URL = window.location.origin.includes('http') ? window.location.origin + '/api' : 'http://127.0.0.1:8000/api';
+const API_BASE_URL = window.location.origin.includes('http://127.0.0.1') || window.location.origin.includes('localhost')
+    ? 'http://127.0.0.1:8000/api'
+    : 'https://backend1-bzh1.onrender.com/api';
 
 // Check if running from file:// which breaks OAuth
 if (window.location.protocol === 'file:') {
