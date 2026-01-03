@@ -14,6 +14,9 @@ import logging
 import uuid
 from groq import Groq 
 import random
+import requests
+
+GOOGLE_CLIENT_ID = "275674033514-doeg1u193tobedjttii6fddm9b8d8t3j.apps.googleusercontent.com"
 # --- 1. CONFIGURATION AND SETUP ---
 
 try:
@@ -827,22 +830,49 @@ async def regenerate_student_code(student_id: str, authorized: bool = Depends(la
 
 @app.post("/api/auth/google-login", response_model=LoginResponse)
 async def google_login(request: SocialTokenRequest):
-    logger.info("Processing Google Login")
-    user_email = "google_user@example.com" 
+    logger.info(f"Processing Google Login...")
     
+    # 1. Verify Token with Google
+    try:
+        # Use Google's tokeninfo endpoint to verify the ID token
+        response = requests.get(f"https://oauth2.googleapis.com/tokeninfo?id_token={request.token}")
+        
+        if response.status_code != 200:
+             logger.error(f"Google Token Check Failed: {response.text}")
+             raise HTTPException(status_code=401, detail="Invalid Google Token")
+        
+        google_data = response.json()
+        
+        # 2. Verify Audience matches our Client ID
+        if google_data['aud'] != GOOGLE_CLIENT_ID:
+             logger.error(f"Audience Mismatch: {google_data['aud']}")
+             raise HTTPException(status_code=401, detail="Token audience mismatch")
+             
+        user_email = google_data['email']
+        user_name = google_data.get('name', 'Google User') # Use real name from Google
+        
+    except Exception as e:
+        logger.error(f"Google Login Error: {e}")
+        raise HTTPException(status_code=401, detail=f"Google Authentication Failed.")
+
+    # 3. Handle User in Database
     conn = get_db_connection()
-    user = conn.execute("SELECT id FROM students WHERE id = ?", (user_email,)).fetchone()
+    user = conn.execute("SELECT id, role FROM students WHERE id = ?", (user_email,)).fetchone()
     
-    if not user:
-        conn.execute("INSERT INTO students (id, name, grade, preferred_subject, attendance_rate, home_language, password, math_score, science_score, english_language_score) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                     (user_email, "Google User", 9, "Science", 100.0, "English", "social_login", 0.0, 0.0, 0.0))
+    role = 'Student'
+    if user:
+         role = user['role']
+    else:
+        # Auto-register new user from Google
+        conn.execute("INSERT INTO students (id, name, grade, preferred_subject, attendance_rate, home_language, password, math_score, science_score, english_language_score, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                     (user_email, user_name, 9, "Science", 100.0, "English", "social_login", 0.0, 0.0, 0.0, 'Student'))
         conn.commit()
         log_auth_event(user_email, "Register Success", "Google Auto-Register")
     
     conn.close()
     
     log_auth_event(user_email, "Login Success", "Google Login")
-    return LoginResponse(user_id=user_email, role='Student')
+    return LoginResponse(user_id=user_email, role=role)
 
 @app.post("/api/auth/microsoft-login", response_model=LoginResponse)
 async def microsoft_login(request: SocialTokenRequest):
