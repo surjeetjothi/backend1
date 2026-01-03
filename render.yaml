@@ -12,3 +12,5 @@ services:
         sync: false # You must enter this in the Render Dashboard
       - key: GROQ_API_KEY
         sync: false # You must enter this in the Render Dashboard
+      - key: GOOGLE_CLIENT_ID
+        sync: false # Optional: Set if you want to override the default Client ID
