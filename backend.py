@@ -16,12 +16,13 @@ from groq import Groq
 import random
 import requests
 
-GOOGLE_CLIENT_ID = "275674033514-doeg1u193tobedjttii6fddm9b8d8t3j.apps.googleusercontent.com"
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "275674033514-uuq15prqbvrc0e31d2c0cahb0qbm36eh.apps.googleusercontent.com")
+
 # --- 1. CONFIGURATION AND SETUP ---
 
 try:
     # Initialize the Groq Client.
-    GROQ_CLIENT = Groq(api_key="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")
+    GROQ_CLIENT = Groq(api_key=os.getenv("GROQ_API_KEY", "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"))
     GROQ_MODEL = "llama-3.1-8b-instant" 
     AI_ENABLED = True
 except Exception as e:
@@ -31,9 +32,17 @@ except Exception as e:
 app = FastAPI(title="EdTech AI Portal API - Enhanced")
 
 # --- CORS Configuration ---
+# Fix: Explicitly list allowed origins for Production + Development
+origins = [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "https://backend1-bzh1.onrender.com",
+    "https://www.backend1-bzh1.onrender.com"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=origins, 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
