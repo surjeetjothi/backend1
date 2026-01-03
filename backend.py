@@ -14,11 +14,42 @@ import logging
 import uuid
 from groq import Groq 
 import random
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import requests
 
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "275674033514-uuq15prqbvrc0e31d2c0cahb0qbm36eh.apps.googleusercontent.com")
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "275674033514-q7ghs0kt970m9soo44cqfusaqkkvgmb4.apps.googleusercontent.com")
 
-# --- 1. CONFIGURATION AND SETUP ---
+# --- EMAIL CONFIGURATION ---
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587
+SMTP_EMAIL = os.getenv("SMTP_EMAIL", "your-email@gmail.com") # User needs to set this
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "your-app-password") # User needs to set this
+
+def send_email(to_email: str, subject: str, body: str):
+    if "example.com" in to_email or "your-email" in SMTP_EMAIL:
+        logger.warning(f"Email simulation: To={to_email}, Subject={subject}")
+        return False # Simulated
+
+    try:
+        msg = MIMEMultipart()
+        msg['From'] = SMTP_EMAIL
+        msg['To'] = to_email
+        msg['Subject'] = subject
+        msg.attach(MIMEText(body, 'html'))
+
+        server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+        server.starttls()
+        server.login(SMTP_EMAIL, SMTP_PASSWORD)
+        server.send_message(msg)
+        server.quit()
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send email: {e}")
+        return False
+
+
 
 try:
     # Initialize the Groq Client.
@@ -42,7 +73,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins, 
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -836,6 +867,47 @@ async def regenerate_student_code(student_id: str, authorized: bool = Depends(la
         "codes": [new_code],
         "message": "Old codes revoked. New code generated."
     }
+
+@app.post("/api/students/{student_id}/email-code")
+async def send_access_code_email(student_id: str):
+    conn = get_db_connection()
+    codes = conn.execute("SELECT code FROM backup_codes WHERE user_id = ?", (student_id,)).fetchall()
+    student = conn.execute("SELECT name FROM students WHERE id = ?", (student_id,)).fetchone()
+    conn.close()
+
+    if not codes:
+        raise HTTPException(status_code=404, detail="No codes found for this user.")
+
+    # Determine Email Address (Assuming ID is Email if it contains @, otherwise fail for now or use a lookup)
+    target_email = student_id if "@" in student_id else None
+    
+    if not target_email:
+         # For demo purposes, if ID isn't an email, we can't send.
+         # In a real app, we'd look up a profile.email field.
+         raise HTTPException(status_code=400, detail="Student ID is not a valid email address.")
+
+    code_list_html = "".join([f"<li style='font-size:18px; font-weight:bold;'>{row['code']}</li>" for row in codes])
+    
+    email_body = f"""
+    <html>
+        <body>
+            <h2>Noble Nexus Access Card</h2>
+            <p>Hello {student['name']},</p>
+            <p>Here are your secure access codes for logging into the portal:</p>
+            <ul>{code_list_html}</ul>
+            <p>Keep these codes safe!</p>
+            <p><i>Noble Nexus Admin</i></p>
+        </body>
+    </html>
+    """
+    
+    success = send_email(target_email, "Your Noble Nexus Access Codes", email_body)
+    
+    if success:
+        return {"message": f"Codes sent to {target_email}"}
+    else:
+        # Fallback if SMTP not configured
+        return {"message": "Email simulation: Check server logs (SMTP not configured)."}
 
 @app.post("/api/auth/google-login", response_model=LoginResponse)
 async def google_login(request: SocialTokenRequest):
