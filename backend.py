@@ -62,14 +62,13 @@ def send_email(to_email: str, subject: str, body: str):
 try:
     # Initialize the Groq Client.
     from groq import Groq
-    api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
-        logger.warning("GROQ_API_KEY not found in environment variables. AI Chat will be disabled.")
-        AI_ENABLED = False
-    else:
-        GROQ_CLIENT = Groq(api_key=api_key)
-        GROQ_MODEL = "llama-3.1-8b-instant" 
-        AI_ENABLED = True
+    # Restore user's specific key as fallback
+    api_key = os.getenv("GROQ_API_KEY", "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")
+    
+    GROQ_CLIENT = Groq(api_key=api_key)
+    GROQ_MODEL = "llama-3.1-8b-instant" 
+    AI_ENABLED = True
+    logger.info("AI Chat System Initialized successfully.")
 except ImportError:
     logger.error("Groq library not installed or failed to import. AI Chat disabled.")
     AI_ENABLED = False
@@ -1511,6 +1510,33 @@ async def get_upcoming_classes(student_id: Optional[str] = None):
             target_students=target_list
         ))
     return results
+
+
+@app.post("/api/ai/chat/{student_id}", response_model=AIChatResponse)
+async def chat_with_ai(student_id: str, request: AIChatRequest):
+    if not AI_ENABLED:
+         return AIChatResponse(reply="AI Chat is currently disabled (System configuration).")
+
+    try:
+        # Simple context fetch (optional optimization)
+        completion = GROQ_CLIENT.chat.completions.create(
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a helpful, encouraging AI tutor for a K-12 student. Keep answers concise, safe, and educational."
+                },
+                {
+                    "role": "user",
+                    "content": request.prompt,
+                }
+            ],
+            model=GROQ_MODEL,
+        )
+        return AIChatResponse(reply=completion.choices[0].message.content)
+
+    except Exception as e:
+        logger.error(f"AI Chat Error: {e}")
+        raise HTTPException(status_code=500, detail=f"AI Error: {str(e)}")
 
 @app.delete("/api/classes/{class_id}")
 async def delete_class(class_id: int):
