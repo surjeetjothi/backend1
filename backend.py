@@ -1197,7 +1197,13 @@ async def add_new_activity(
     x_user_role: str = Header(None, alias="X-User-Role"),
     x_user_id: str = Header(None, alias="X-User-Id")
 ):
-    if not check_permission(x_user_role, "edit_all_grades"):
+    # Allow if Teacher/Admin (edit_all_grades) OR if Student adding their own activity
+    has_permission = check_permission(x_user_role, "edit_all_grades")
+    if not has_permission:
+        if x_user_role == "Student" and str(request.student_id) == str(x_user_id):
+            has_permission = True
+    
+    if not has_permission:
          log_auth_event(x_user_id or "unknown", "Unauthorized Access", "Attempted to add activity without permission")
          raise HTTPException(status_code=403, detail="Permission denied.")
 
