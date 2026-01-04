@@ -12,12 +12,20 @@ import warnings
 import os
 import logging
 import uuid
-from groq import Groq 
+# from groq import Groq (Moved to initialization block) 
 import random
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import requests
+
+# Configure Logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[logging.StreamHandler()]
+)
+logger = logging.getLogger(__name__)
 
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "275674033514-q7ghs0kt970m9soo44cqfusaqkkvgmb4.apps.googleusercontent.com")
 
@@ -53,11 +61,20 @@ def send_email(to_email: str, subject: str, body: str):
 
 try:
     # Initialize the Groq Client.
-    GROQ_CLIENT = Groq(api_key=os.getenv("GROQ_API_KEY", "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"))
-    GROQ_MODEL = "llama-3.1-8b-instant" 
-    AI_ENABLED = True
+    from groq import Groq
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        logger.warning("GROQ_API_KEY not found in environment variables. AI Chat will be disabled.")
+        AI_ENABLED = False
+    else:
+        GROQ_CLIENT = Groq(api_key=api_key)
+        GROQ_MODEL = "llama-3.1-8b-instant" 
+        AI_ENABLED = True
+except ImportError:
+    logger.error("Groq library not installed or failed to import. AI Chat disabled.")
+    AI_ENABLED = False
 except Exception as e:
-    print(f"ERROR: Failed to initialize Groq client. AI Chat disabled. Error: {e}")
+    logger.error(f"Failed to initialize Groq client. AI Chat disabled. Error: {e}")
     AI_ENABLED = False
 
 app = FastAPI(title="EdTech AI Portal API - Enhanced")
@@ -79,13 +96,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configure Logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[logging.StreamHandler()]
-)
-logger = logging.getLogger(__name__)
+
 
 DATABASE_URL = "edtech_fastapi_enhanced.db"
 MIN_ACTIVITIES = 5 
