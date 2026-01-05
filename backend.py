@@ -529,10 +529,10 @@ def initialize_db():
     if cursor.execute("SELECT COUNT(*) FROM students").fetchone()[0] == 0:
         students_data = [
             # ID, Name, Grade, Subject, Attend %, Language, Password, Math, Science, English, Role, FailedLogin, LockedUntil
-            ('S001', 'Alice Smith', 9, 'Math', 92.5, 'English', '123', 85.0, 78.5, 90.0, 'Student', 0, None),
+            ('S001', 'Alice Smith', 9, 'Maths', 92.5, 'English', '123', 85.0, 78.5, 90.0, 'Student', 0, None),
             ('S002', 'Bob Johnson', 10, 'Science', 85.0, 'Spanish', '123', 60.0, 95.0, 75.0, 'Student', 0, None),
-            ('SURJEET', 'Surjeet J', 11, 'Physics', 77.0, 'Punjabi', '123', 70.0, 65.0, 80.0, 'Student', 0, None),
-            ('DEVA', 'Deva Krishnan', 11, 'Chemistry', 90.0, 'Tamil', '123', 95.0, 88.0, 92.0, 'Student', 0, None),
+            ('SURJEET', 'Surjeet J', 11, 'Science', 77.0, 'Punjabi', '123', 70.0, 65.0, 80.0, 'Student', 0, None),
+            ('DEVA', 'Deva Krishnan', 11, 'Tamil', 90.0, 'Tamil', '123', 95.0, 88.0, 92.0, 'Student', 0, None),
             ('HARISH', 'Harish Boy', 5, 'English', 7.0, 'Hindi', '123', 50.0, 50.0, 45.0, 'Student', 0, None),
             ('teacher', 'Teacher Admin', 0, 'All', 100.0, 'English', 'teacher', 100.0, 100.0, 100.0, 'Teacher', 0, None), 
         ]
