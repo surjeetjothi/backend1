@@ -1,10 +1,12 @@
-from fastapi import FastAPI, HTTPException, Header, Depends
+from fastapi import FastAPI, HTTPException, Header, Depends, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse, Response, StreamingResponse
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 import sqlite3
 import pandas as pd
+import io
+import csv
 from datetime import datetime, timedelta
 from sklearn.ensemble import RandomForestClassifier
 import numpy as np
@@ -12,6 +14,10 @@ import warnings
 import os
 import logging
 import uuid
+import shutil
+import json
+from fastapi import FastAPI, HTTPException, Header, Depends, WebSocket, WebSocketDisconnect, File, UploadFile
+from fastapi.staticfiles import StaticFiles
 # from groq import Groq (Moved to initialization block) 
 import random
 import smtplib
@@ -63,7 +69,7 @@ try:
     # Initialize the Groq Client.
     from groq import Groq
     # Restore user's specific key as fallback
-    api_key = os.getenv("GROQ_API_KEY", "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")
+    api_key = os.getenv("GROQ_API_KEY", "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")
     
     GROQ_CLIENT = Groq(api_key=api_key)
     GROQ_MODEL = "llama-3.1-8b-instant" 
@@ -158,6 +164,15 @@ class AIChatRequest(BaseModel):
 
 class AIChatResponse(BaseModel):
     reply: str
+
+class GenerateQuizRequest(BaseModel):
+    topic: str
+    difficulty: str = "Medium"
+    question_count: int = 5
+    type: str = "Multiple Choice" # or "Short Answer"
+
+class GenerateQuizResponse(BaseModel):
+    content: str
     
 class AddActivityRequest(BaseModel):
     student_id: str
@@ -264,6 +279,22 @@ class AuditLogResponse(BaseModel):
     event_type: str
     timestamp: str
     details: str
+
+class QuizCreateRequest(BaseModel):
+    group_id: int
+    title: str
+    questions: List[Dict[str, Any]] # JSON List of questions
+
+class QuizSubmitRequest(BaseModel):
+    student_id: str
+    answers: Dict[str, str] # Question Index -> Answer
+
+class QuizResponse(BaseModel):
+    id: int
+    group_id: int
+    title: str
+    question_count: int
+    created_at: str
 
 # --- 3. DATABASE HELPER FUNCTIONS ---
 
@@ -427,6 +458,32 @@ def initialize_db():
     )
     """)
 
+    # Quizzes Table (LMS Phase 2)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS quizzes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        group_id INTEGER,
+        title TEXT,
+        questions TEXT, -- JSON String
+        created_at TEXT,
+        FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE CASCADE
+    )
+    """)
+
+    # Quiz Attempts Table (LMS Phase 2)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS quiz_attempts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        quiz_id INTEGER,
+        student_id TEXT,
+        score REAL,
+        answers TEXT, -- JSON String
+        submitted_at TEXT,
+        FOREIGN KEY (quiz_id) REFERENCES quizzes(id) ON DELETE CASCADE,
+        FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
+    )
+    """)
+
     # --- MIGRATIONS ---
     # Add columns if missing
     try:
@@ -450,6 +507,18 @@ def initialize_db():
     except sqlite3.OperationalError: pass 
     try:
         cursor.execute("ALTER TABLE groups ADD COLUMN subject TEXT DEFAULT 'General'")
+    except sqlite3.OperationalError: pass
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN xp INTEGER DEFAULT 0")
+    except sqlite3.OperationalError: pass
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN badges TEXT DEFAULT '[]'")
+    except sqlite3.OperationalError: pass
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN xp INTEGER DEFAULT 0")
+    except sqlite3.OperationalError: pass
+    try:
+        cursor.execute("ALTER TABLE students ADD COLUMN badges TEXT DEFAULT '[]'")
     except sqlite3.OperationalError: pass
 
     # Ensure Teacher has correct role
@@ -616,6 +685,12 @@ async def verify_permission(permission: str, x_user_role: str = Header(None, ali
     
     return True
 
+
+# --- LMS & UPLOADS CONFIGURATION ---
+UPLOAD_DIR = "static/uploads"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # --- 7. API ENDPOINTS ---
 
 @app.get("/", response_class=HTMLResponse)
@@ -696,6 +771,16 @@ async def login_user(request: LoginRequest):
             role = user['role'] 
             logger.info(f"Login successful for user: {request.username} (Role: {role})")
             log_auth_event(request.username, "Login Success", f"Role: {role}")
+
+            # GAMIFICATION: Award daily login XP
+            try:
+                current_xp = user['xp'] or 0
+                # Simple +10 XP for login
+                cursor.execute("UPDATE students SET xp = ? WHERE id = ?", (current_xp + 10, user['id']))
+                conn.commit()
+            except Exception as e:
+                logger.error(f"Error awarding login XP: {e}")
+
             return LoginResponse(user_id=user['id'], role=role, requires_2fa=False)
 
     else:
@@ -1538,6 +1623,55 @@ async def chat_with_ai(student_id: str, request: AIChatRequest):
         logger.error(f"AI Chat Error: {e}")
         raise HTTPException(status_code=500, detail=f"AI Error: {str(e)}")
 
+@app.post("/api/ai/generate-quiz", response_model=GenerateQuizResponse)
+async def generate_quiz(request: GenerateQuizRequest):
+    if not AI_ENABLED:
+         return GenerateQuizResponse(content='[{"question": "AI Disabled", "options": ["A", "B"], "correct_answer": "A"}]')
+
+    try:
+        # Enforce JSON Structure for Database Compatibility
+        prompt = f"""
+        Generate a {request.difficulty} difficulty {request.type} quiz about "{request.topic}".
+        It should have {request.question_count} questions.
+        Return ONLY a raw JSON array. Do not include markdown formatting (like ```json), just the array.
+        Format:
+        [
+            {{
+                "question": "Question text",
+                "options": ["Option A", "Option B", "Option C", "Option D"],
+                "correct_answer": "Option A"
+            }}
+        ]
+        """
+        
+        completion = GROQ_CLIENT.chat.completions.create(
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a quiz generation engine. Output valid JSON only."
+                },
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            ],
+            model=GROQ_MODEL,
+        )
+        # Strip potential markdown if model misbehaves
+        raw_content = completion.choices[0].message.content.strip()
+        if raw_content.startswith("```json"):
+            raw_content = raw_content[7:]
+        if raw_content.startswith("```"):
+            raw_content = raw_content[3:]
+        if raw_content.endswith("```"):
+            raw_content = raw_content[:-3]
+            
+        return GenerateQuizResponse(content=raw_content.strip())
+
+    except Exception as e:
+        logger.error(f"AI Quiz Gen Error: {e}")
+        raise HTTPException(status_code=500, detail=f"AI Error: {str(e)}")
+
 @app.delete("/api/classes/{class_id}")
 async def delete_class(class_id: int):
     conn = get_db_connection()
@@ -1567,6 +1701,252 @@ async def end_class():
     CLASS_SESSION["meet_link"] = ""
     return {"message": "Online class ended."}
 
-@app.get("/api/class/status")
-async def get_class_status():
-    return CLASS_SESSION 
+# --- WEBSOCKET MANAGER FOR WHITEBOARD ---
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        self.active_connections.remove(websocket)
+
+    async def broadcast(self, message: str):
+        # Broadcast to all connected clients
+        for connection in self.active_connections:
+            try:
+                await connection.send_text(message)
+            except Exception:
+                # Handle broken connections gracefully
+                pass
+
+manager = ConnectionManager()
+
+@app.websocket("/ws/whiteboard")
+async def websocket_endpoint(websocket: WebSocket):
+    await manager.connect(websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            await manager.broadcast(data)
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+    except Exception as e:
+        logger.error(f"WebSocket Error: {e}")
+        manager.disconnect(websocket)
+ 
+
+@app.get("/api/teacher/export-grades-csv")
+async def export_grades_csv(
+    x_user_role: str = Header(None, alias="X-User-Role")
+):
+    if not check_permission(x_user_role, "view_all_grades"):
+         raise HTTPException(status_code=403, detail="Permission denied.")
+
+    conn = get_db_connection()
+    try:
+        # Fetch comprehensive student data
+        query = """
+            SELECT 
+                s.id, 
+                s.name, 
+                s.grade, 
+                s.attendance_rate || '%' as attendance,
+                s.preferred_subject,
+                s.math_score as initial_math_score,
+                s.science_score as initial_science_score,
+                s.english_language_score as initial_english_score,
+                COALESCE(ROUND(AVG(a.score), 1), 0) as current_average_score,
+                COUNT(a.id) as activities_completed
+            FROM students s
+            LEFT JOIN activities a ON s.id = a.student_id
+            WHERE s.role = 'Student'
+            GROUP BY s.id
+        """
+        cursor = conn.cursor()
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        
+        # Create CSV in memory
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Write Header
+        writer.writerow([
+            "Student ID", "Name", "Grade", "Attendance", "Fav Subject", 
+            "Initial Math", "Initial Science", "Initial English", 
+            "Current Avg Score", "Activities Completed"
+        ])
+        
+        # Write Data
+        for row in rows:
+            writer.writerow([
+                row['id'], row['name'], row['grade'], row['attendance'], row['preferred_subject'],
+                row['initial_math_score'], row['initial_science_score'], row['initial_english_score'],
+                row['current_average_score'], row['activities_completed']
+            ])
+            
+        output.seek(0)
+        
+        # Return as StreamingResponse
+        response = StreamingResponse(
+            iter([output.getvalue()]),
+            media_type="text/csv"
+        )
+        response.headers["Content-Disposition"] = "attachment; filename=class_grades_export.csv"
+        return response
+
+    except Exception as e:
+        logger.error(f"Export Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate export.")
+    finally:
+        conn.close()
+
+# --- LMS MODULE: MATERIALS & QUIZZES ---
+
+@app.post("/api/groups/{group_id}/upload")
+async def upload_group_material(group_id: int, file: UploadFile = File(...), title: str = None):
+    # LMS Phase 1: File Uploads
+    try:
+        file_ext = os.path.splitext(file.filename)[1]
+        unique_filename = f"{uuid.uuid4()}{file_ext}"
+        file_path = os.path.join(UPLOAD_DIR, unique_filename)
+        
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+        # Determine Type
+        content_type = "File"
+        if file_ext.lower() in ['.pdf']: content_type = "PDF"
+        elif file_ext.lower() in ['.mp4', '.mov', '.avi']: content_type = "Video"
+        elif file_ext.lower() in ['.jpg', '.png', '.jpeg']: content_type = "Image"
+        
+        # Save to DB
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        date_str = datetime.now().strftime("%Y-%m-%d")
+        display_title = title or file.filename
+        
+        # URL accessible via static mount
+        file_url = f"/static/uploads/{unique_filename}"
+        
+        cursor.execute("INSERT INTO group_materials (group_id, title, type, content, date) VALUES (?, ?, ?, ?, ?)",
+                      (group_id, display_title, content_type, file_url, date_str))
+        conn.commit()
+        conn.close()
+        
+        return {"message": "File uploaded successfully", "url": file_url}
+    except Exception as e:
+        logger.error(f"Upload failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/quizzes/create", response_model=QuizResponse)
+async def create_quiz_endpoint(request: QuizCreateRequest):
+    # LMS Phase 2: Create Quiz
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    
+    questions_json = json.dumps(request.questions)
+    created_at = datetime.now().isoformat()
+    
+    cursor.execute("INSERT INTO quizzes (group_id, title, questions, created_at) VALUES (?, ?, ?, ?)",
+                  (request.group_id, request.title, questions_json, created_at))
+    quiz_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    
+    return QuizResponse(
+        id=quiz_id, 
+        group_id=request.group_id, 
+        title=request.title, 
+        question_count=len(request.questions), 
+        created_at=created_at
+    )
+
+@app.get("/api/groups/{group_id}/quizzes")
+async def get_group_quizzes(group_id: int):
+    conn = get_db_connection()
+    quizzes = conn.execute("SELECT id, title, created_at, questions FROM quizzes WHERE group_id = ?", (group_id,)).fetchall()
+    
+    # Also fetch attempts for the current user if they are a student? 
+    # For now just return the quizzes. Frontend can verify if taken.
+    result = []
+    for q in quizzes:
+        q_dict = dict(q)
+        q_dict['question_count'] = len(json.loads(q_dict['questions']))
+        del q_dict['questions'] # Don't send answers/questions in list view
+        result.append(q_dict)
+    conn.close()
+    return result
+
+@app.get("/api/quizzes/{quiz_id}")
+async def get_quiz_details(quiz_id: int):
+    conn = get_db_connection()
+    quiz = conn.execute("SELECT * FROM quizzes WHERE id = ?", (quiz_id,)).fetchone()
+    conn.close()
+    
+    if not quiz:
+        raise HTTPException(status_code=404, detail="Quiz not found")
+        
+    data = dict(quiz)
+    data['questions'] = json.loads(data['questions'])
+    
+    # SECURITY: If student, strip 'isCorrect' or 'answer' fields from questions if they exist?
+    # For simplicity in this V1, we assume questions JSON is [{question, options, correct_answer}]
+    # We should ideally strip 'correct_answer' before sending to student.
+    
+    safe_questions = []
+    for q in data['questions']:
+        q_copy = q.copy()
+        if 'correct_answer' in q_copy:
+            del q_copy['correct_answer'] # Hide answer
+        safe_questions.append(q_copy)
+        
+    data['questions'] = safe_questions
+    return data
+
+@app.post("/api/quizzes/{quiz_id}/submit")
+async def submit_quiz(quiz_id: int, request: QuizSubmitRequest):
+    conn = get_db_connection()
+    quiz = conn.execute("SELECT * FROM quizzes WHERE id = ?", (quiz_id,)).fetchone()
+    
+    if not quiz:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Quiz not found")
+        
+    questions = json.loads(quiz['questions'])
+    score = 0
+    total = len(questions)
+    
+    # Grading Logic
+    for idx, q in enumerate(questions):
+        # We assume Question structure has 'correct_answer'
+        correct = q.get('correct_answer', '').strip().lower()
+        # Answer key is usually a string index "0", "1" etc.
+        user_ans = request.answers.get(str(idx), '').strip().lower()
+        
+        if user_ans == correct:
+            score += 1
+            
+    final_score_percent = (score / total) * 100 if total > 0 else 0
+    
+    # Save Attempt
+    answers_json = json.dumps(request.answers)
+    submitted_at = datetime.now().isoformat()
+    
+    conn.execute("INSERT INTO quiz_attempts (quiz_id, student_id, score, answers, submitted_at) VALUES (?, ?, ?, ?, ?)",
+                (quiz_id, request.student_id, final_score_percent, answers_json, submitted_at))
+    
+    # Clean up old attempts? (Optional: keep only best? or all?)
+    
+    # Update Student Stats (XP, Activity Log)
+    # Re-use Activity Table for "Quiz" type?
+    conn.execute("INSERT INTO activities (student_id, date, topic, difficulty, score, time_spent_min) VALUES (?, ?, ?, ?, ?, ?)",
+                (request.student_id, datetime.now().strftime("%Y-%m-%d"), f"Quiz: {quiz['title']}", "Medium", final_score_percent, 15))
+
+    conn.commit()
+    conn.close()
+    
+    return {"score": final_score_percent, "total": total, "correct": score}
