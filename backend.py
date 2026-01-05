@@ -550,10 +550,10 @@ def initialize_db():
         
     # Ensure Teacher and Admin exist
     if not cursor.execute("SELECT id FROM students WHERE id = 'teacher'").fetchone():
-         cursor.execute("INSERT INTO students VALUES ('teacher', 'Teacher Admin', 0, 'All', 100.0, 'English', 'teacher', 100.0, 100.0, 100.0, 'Teacher', 0, NULL)")
+         cursor.execute("INSERT INTO students (id, name, grade, preferred_subject, attendance_rate, home_language, password, math_score, science_score, english_language_score, role, failed_login_attempts, locked_until) VALUES ('teacher', 'Teacher Admin', 0, 'All', 100.0, 'English', 'teacher', 100.0, 100.0, 100.0, 'Teacher', 0, NULL)")
     
     if not cursor.execute("SELECT id FROM students WHERE id = 'admin'").fetchone():
-         cursor.execute("INSERT INTO students VALUES ('admin', 'System Admin', 0, 'All', 100.0, 'English', 'admin', 100.0, 100.0, 100.0, 'Admin', 0, NULL)")
+         cursor.execute("INSERT INTO students (id, name, grade, preferred_subject, attendance_rate, home_language, password, math_score, science_score, english_language_score, role, failed_login_attempts, locked_until) VALUES ('admin', 'System Admin', 0, 'All', 100.0, 'English', 'admin', 100.0, 100.0, 100.0, 'Admin', 0, NULL)")
 
     # Seed demo codes for existing users (Check individually to ensure all are present)
     demo_codes = [
