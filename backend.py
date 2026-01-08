@@ -73,13 +73,18 @@ try:
     
     GROQ_CLIENT = Groq(api_key=api_key)
     GROQ_MODEL = "llama-3.1-8b-instant" 
+    
+    # Initialize OpenRouter for Quiz Generator
+    OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "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")
+    OPENROUTER_MODEL = "meta-llama/llama-3.1-70b-instruct" # User requested Llama 3.1 70B
+    
     AI_ENABLED = True
-    logger.info("AI Chat System Initialized successfully.")
+    logger.info("AI Chat System Initialized (Groq + Gemini for Quizzes).")
 except ImportError:
-    logger.error("Groq library not installed or failed to import. AI Chat disabled.")
+    logger.error("Groq or google-generativeai library not installed. AI features disabled.")
     AI_ENABLED = False
 except Exception as e:
-    logger.error(f"Failed to initialize Groq client. AI Chat disabled. Error: {e}")
+    logger.error(f"Failed to initialize AI clients. Error: {e}")
     AI_ENABLED = False
 
 app = FastAPI(title="EdTech AI Portal API - Enhanced")
@@ -170,6 +175,7 @@ class GenerateQuizRequest(BaseModel):
     difficulty: str = "Medium"
     question_count: int = 5
     type: str = "Multiple Choice" # or "Short Answer"
+    description: Optional[str] = None
 
 class GenerateQuizResponse(BaseModel):
     content: str
@@ -279,6 +285,8 @@ class AuditLogResponse(BaseModel):
     event_type: str
     timestamp: str
     details: str
+    logout_time: Optional[str] = None
+    duration_minutes: Optional[int] = None
 
 class QuizCreateRequest(BaseModel):
     group_id: int
@@ -295,6 +303,50 @@ class QuizResponse(BaseModel):
     title: str
     question_count: int
     created_at: str
+
+class AssignmentCreateRequest(BaseModel):
+    title: str
+    description: str
+    due_date: str
+    type: str = "Assignment" # or "Project"
+    points: int = 100
+
+class AssignmentResponse(BaseModel):
+    id: int
+    group_id: int
+    title: str
+    description: str
+    due_date: str
+    type: str
+    points: int
+
+class SubmissionCreateRequest(BaseModel):
+    student_id: str
+    content: str # Text or Link
+
+class SubmissionResponse(BaseModel):
+    id: int
+    assignment_id: int
+    student_id: str
+    student_name: Optional[str] = None
+    content: str
+    submitted_at: str
+    grade: Optional[float] = None
+    feedback: Optional[str] = None
+
+class GradeSubmissionRequest(BaseModel):
+    grade: float
+    feedback: str = ""
+
+class LessonPlanRequest(BaseModel):
+    topic: str
+    grade: str
+    subject: str
+    duration_mins: int
+    description: Optional[str] = None
+
+class LessonPlanResponse(BaseModel):
+    content: str
 
 # --- 3. DATABASE HELPER FUNCTIONS ---
 
@@ -319,6 +371,33 @@ def log_auth_event(user_id: str, event_type: str, details: str = ""):
         conn.close()
     except Exception as e:
         logger.error(f"Failed to write auth log: {e}")
+
+def update_user_logout(user_id: str):
+    """Updates the last explicit 'Login Success' event with logout time and duration."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        # Find the latest open session (Login Success with no logout_time)
+        row = cursor.execute("SELECT id, timestamp FROM auth_logs WHERE user_id = ? AND event_type = 'Login Success' AND logout_time IS NULL ORDER BY id DESC LIMIT 1", (user_id,)).fetchone()
+        
+        if row:
+            log_id = row['id']
+            # Parse ISO formats safely
+            try:
+                start_time = datetime.fromisoformat(row['timestamp'])
+                end_time = datetime.now()
+                duration = int((end_time - start_time).total_seconds() / 60)
+                
+                cursor.execute("UPDATE auth_logs SET logout_time = ?, duration_minutes = ? WHERE id = ?", 
+                               (end_time.isoformat(), duration, log_id))
+                conn.commit()
+                logger.info(f"Updated session duration for user {user_id}: {duration} mins")
+            except ValueError:
+                pass # safely ignore parsing errors if legacy data is weird
+        
+        conn.close()
+    except Exception as e:
+        logger.error(f"Failed to update session logout: {e}")
 
 def validate_password_strength(password: str):
     if len(password) < 8:
@@ -521,6 +600,15 @@ def initialize_db():
         cursor.execute("ALTER TABLE students ADD COLUMN badges TEXT DEFAULT '[]'")
     except sqlite3.OperationalError: pass
 
+    # --- NEW FIX: Add missing columns to auth_logs to prevent crash ---
+    try:
+        cursor.execute("ALTER TABLE auth_logs ADD COLUMN logout_time TEXT")
+    except sqlite3.OperationalError: pass
+    try:
+        cursor.execute("ALTER TABLE auth_logs ADD COLUMN duration_minutes INTEGER")
+    except sqlite3.OperationalError: pass
+    # ------------------------------------------------------------------
+
     # Ensure Teacher has correct role
     cursor.execute("UPDATE students SET role = 'Teacher' WHERE id = 'teacher'")
     conn.commit()
@@ -646,7 +734,7 @@ ROLE_PERMISSIONS = {
     "Admin": [
         "view_dashboard", "manage_users", "manage_invitations", 
         "view_all_grades", "edit_all_grades", 
-        "schedule_active_class", "manage_groups"
+        "schedule_active_class", "manage_groups", "view_audit_logs"
     ],
     "Teacher": [
         "view_dashboard", "invite_students", 
@@ -703,7 +791,7 @@ async def read_root():
         return HTMLResponse(content="""
             <html>
                 <body style="font-family: sans-serif; text-align: center; padding-top: 50px;">
-                    <h1 style="color: #4CAF50;">Noble Nexus API is Running 🚀</h1>
+                    <h1 style="color: #4CAF50;">Class Bridge API is Running 🚀</h1>
                     <p>The backend is online and accepting requests.</p>
                     <p>Please access the application via your <strong>Vercel Frontend</strong>.</p>
                 </body>
@@ -722,6 +810,68 @@ async def read_script():
     with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
     return Response(content=content, media_type="text/javascript")
+
+@app.post("/api/ai/lesson-plan", response_model=LessonPlanResponse)
+async def generate_lesson_plan(request: LessonPlanRequest, user_role: str = Header(None, alias="X-User-Role")):
+    if user_role and user_role != "Teacher" and user_role != "Admin":
+         raise HTTPException(status_code=403, detail="Only teachers can generate lesson plans.")
+
+    prompt = (
+        f"Create a detailed {request.duration_mins}-minute lesson plan for a grade {request.grade} "
+        f"{request.subject} class on the topic: '{request.topic}'.\n"
+    )
+    if request.description:
+        prompt += f"Additional Context/Instructions: {request.description}\n"
+    
+    prompt += (
+        f"Structure it with timings (e.g., Intro 5m, Activity 20m, Wrap-up 5m). "
+        f"Include specific activities."
+    )
+
+    if AI_ENABLED:
+        try:
+            chat_completion = GROQ_CLIENT.chat.completions.create(
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are an expert teacher's assistant. Generate structured, timed lesson plans."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                model=GROQ_MODEL,
+                temperature=0.7,
+            )
+            return LessonPlanResponse(content=chat_completion.choices[0].message.content)
+        except Exception as e:
+            logger.error(f"AI Generation Failed: {e}")
+            # Fallback to heuristic if AI fails
+    
+    # Heuristic Fallback
+    intro_time = max(5, int(request.duration_mins * 0.15))
+    main_time = int(request.duration_mins * 0.7)
+    wrap_time = request.duration_mins - intro_time - main_time
+    
+    plan = f"""
+    ## 📚 Lesson Plan: {request.topic}
+    **Grade:** {request.grade} | **Subject:** {request.subject} | **Duration:** {request.duration_mins} mins
+    
+    ### 1. Introduction ({intro_time} mins)
+    *   **Hook:** Start with a question or short story about {request.topic}.
+    *   **Objective:** Explain what students will learn today.
+    
+    ### 2. Main Activity ({main_time} mins)
+    *   **Direct Instruction:** Briefly explain the core concepts of {request.topic}.
+    *   **Guided Practice:** Work through an example together.
+    *   **Independent/Group Work:** Students practice or discuss {request.topic}.
+    
+    ### 3. Wrap-Up ({wrap_time} mins)
+    *   **Review:** Recap key points.
+    *   **Exit Ticket:** Ask one checking question.
+    """
+    return LessonPlanResponse(content=plan)
 
 @app.post("/api/auth/login", response_model=LoginResponse)
 async def login_user(request: LoginRequest):
@@ -885,21 +1035,7 @@ async def logout_user(request: LogoutRequest):
     log_auth_event(request.user_id, "Logout", "User logged out")
     return {"message": "Logged out successfully"}
 
-@app.get("/api/admin/audit-logs", response_model=List[AuditLogResponse])
-async def get_audit_logs(
-    x_user_role: str = Header(None, alias="X-User-Role"),
-    x_user_id: str = Header(None, alias="X-User-Id")
-):
-    # Strict RBAC Check for Admin only
-    if x_user_role != "Admin":
-         log_auth_event(x_user_id or "unknown", "Unauthorized Access", "Attempted to view audit logs")
-         raise HTTPException(status_code=403, detail="Permission denied. Admin access required.")
 
-    df = fetch_data_df("SELECT * FROM auth_logs ORDER BY timestamp DESC LIMIT 100")
-    if df.empty:
-        return []
-    
-    return df.to_dict('records')
 
 @app.get("/api/auth/permissions")
 async def get_role_permissions():
@@ -986,17 +1122,17 @@ async def send_access_code_email(student_id: str):
     email_body = f"""
     <html>
         <body>
-            <h2>Noble Nexus Access Card</h2>
+            <h2>Class Bridge Access Card</h2>
             <p>Hello {student['name']},</p>
             <p>Here are your secure access codes for logging into the portal:</p>
             <ul>{code_list_html}</ul>
             <p>Keep these codes safe!</p>
-            <p><i>Noble Nexus Admin</i></p>
+            <p><i>Class Bridge Admin</i></p>
         </body>
     </html>
     """
     
-    success = send_email(target_email, "Your Noble Nexus Access Codes", email_body)
+    success = send_email(target_email, "Your Class Bridge Access Codes", email_body)
     
     if success:
         return {"message": f"Codes sent to {target_email}"}
@@ -1539,6 +1675,81 @@ async def get_student_groups(student_id: str):
     conn.close()
     return [GroupResponse(id=r['id'], name=r['name'], description=r['description'], subject=r['subject'], member_count=0) for r in groups]
 
+@app.get("/api/students/{student_id}/assignments")
+async def get_student_assignments(student_id: str):
+    conn = get_db_connection()
+    assignments = conn.execute("""
+        SELECT a.*, g.name as course_name
+        FROM assignments a
+        JOIN group_members gm ON a.group_id = gm.group_id
+        JOIN groups g ON a.group_id = g.id
+        WHERE gm.student_id = ?
+        ORDER BY a.due_date ASC
+    """, (student_id,)).fetchall()
+    conn.close()
+    return [dict(row) for row in assignments]
+
+# --- ASSIGNMENTS & PROJECT MANAGEMENT ---
+
+@app.post("/api/groups/{group_id}/assignments")
+async def create_assignment(group_id: int, request: AssignmentCreateRequest):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO assignments (group_id, title, description, due_date, type, points) VALUES (?, ?, ?, ?, ?, ?)",
+                   (group_id, request.title, request.description, request.due_date, request.type, request.points))
+    conn.commit()
+    conn.close()
+    return {"message": f"{request.type} created successfully."}
+
+@app.get("/api/groups/{group_id}/assignments", response_model=List[AssignmentResponse])
+async def get_group_assignments(group_id: int):
+    conn = get_db_connection()
+    # Filter by group
+    data = conn.execute("SELECT * FROM assignments WHERE group_id = ? ORDER BY due_date ASC", (group_id,)).fetchall()
+    conn.close()
+    return [AssignmentResponse(**dict(row)) for row in data]
+
+@app.post("/api/assignments/{assignment_id}/submit")
+async def submit_assignment(assignment_id: int, request: SubmissionCreateRequest):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    submitted_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Check if exists to update or insert
+    existing = cursor.execute("SELECT id FROM submissions WHERE assignment_id = ? AND student_id = ?", (assignment_id, request.student_id)).fetchone()
+    
+    if existing:
+         cursor.execute("UPDATE submissions SET content = ?, submitted_at = ? WHERE id = ?", (request.content, submitted_at, existing[0]))
+    else:
+         cursor.execute("INSERT INTO submissions (assignment_id, student_id, content, submitted_at) VALUES (?, ?, ?, ?)",
+                        (assignment_id, request.student_id, request.content, submitted_at))
+    
+    conn.commit()
+    conn.close()
+    return {"message": "Assignment submitted successfully."}
+
+@app.get("/api/assignments/{assignment_id}/submissions", response_model=List[SubmissionResponse])
+async def get_assignment_submissions(assignment_id: int):
+    conn = get_db_connection()
+    query = """
+        SELECT s.*, st.name as student_name 
+        FROM submissions s
+        JOIN students st ON s.student_id = st.id
+        WHERE s.assignment_id = ?
+    """
+    data = conn.execute(query, (assignment_id,)).fetchall()
+    conn.close()
+    return [SubmissionResponse(**dict(row)) for row in data]
+
+@app.post("/api/submissions/{submission_id}/grade")
+async def grade_submission(submission_id: int, request: GradeSubmissionRequest):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE submissions SET grade = ?, feedback = ? WHERE id = ?", (request.grade, request.feedback, submission_id))
+    conn.commit()
+    conn.close()
+    return {"message": "Grade saved."}
+
 # --- LIVE CLASS MANAGEMENT ---
 
 CLASS_SESSION = {
@@ -1632,6 +1843,11 @@ async def generate_quiz(request: GenerateQuizRequest):
         # Enforce JSON Structure for Database Compatibility
         prompt = f"""
         Generate a {request.difficulty} difficulty {request.type} quiz about "{request.topic}".
+        """
+        if request.description:
+            prompt += f"Context/Description: {request.description}\n"
+            
+        prompt += f"""
         It should have {request.question_count} questions.
         Return ONLY a raw JSON array. Do not include markdown formatting (like ```json), just the array.
         Format:
@@ -1644,21 +1860,25 @@ async def generate_quiz(request: GenerateQuizRequest):
         ]
         """
         
-        completion = GROQ_CLIENT.chat.completions.create(
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You are a quiz generation engine. Output valid JSON only."
-                },
-                {
-                    "role": "user",
-                    "content": prompt,
-                }
-            ],
-            model=GROQ_MODEL,
-        )
-        # Strip potential markdown if model misbehaves
-        raw_content = completion.choices[0].message.content.strip()
+        full_prompt = "You are a quiz generation engine. Output valid JSON only.\n" + prompt
+        
+        # Call OpenRouter API
+        or_headers = {
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        or_data = {
+            "model": OPENROUTER_MODEL,
+            "messages": [
+                {"role": "user", "content": full_prompt}
+            ]
+        }
+        or_response = requests.post("https://openrouter.ai/api/v1/chat/completions", headers=or_headers, json=or_data)
+        if or_response.status_code != 200:
+             raise Exception(f"OpenRouter API Error: {or_response.text}")
+             
+        or_json = or_response.json()
+        raw_content = or_json['choices'][0]['message']['content'].strip()
         if raw_content.startswith("```json"):
             raw_content = raw_content[7:]
         if raw_content.startswith("```"):
@@ -1950,3 +2170,38 @@ async def submit_quiz(quiz_id: int, request: QuizSubmitRequest):
     conn.close()
     
     return {"score": final_score_percent, "total": total, "correct": score}
+
+@app.get("/api/admin/audit-logs", response_model=List[AuditLogResponse])
+async def get_audit_logs(
+    x_user_role: str = Header(None, alias="X-User-Role"),
+    x_user_id: str = Header(None, alias="X-User-Id")
+):
+    if not check_permission(x_user_role, "view_audit_logs"):
+         log_auth_event(x_user_id or "unknown", "Unauthorized Access", "Attempted to view audit logs")
+         raise HTTPException(status_code=403, detail="Permission denied.")
+
+    conn = get_db_connection()
+    try:
+        # Select all columns explicitly including new ones
+        logs = conn.execute("SELECT id, user_id, event_type, timestamp, details, logout_time, duration_minutes FROM auth_logs ORDER BY timestamp DESC LIMIT 100").fetchall()
+        
+        return [
+            AuditLogResponse(
+                id=row['id'], 
+                user_id=row['user_id'], 
+                event_type=row['event_type'], 
+                timestamp=row['timestamp'], 
+                details=row['details'],
+                logout_time=row['logout_time'],
+                duration_minutes=row['duration_minutes']
+            ) 
+            for row in logs
+        ]
+    except Exception as e:
+        # Log the error for debugging
+        print(f"Error fetching logs: {e}")
+        # Return a simplified list or empty list to fail gracefully if schema mismatch persists
+        # But for valid JSON response let's raise
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+    finally:
+        conn.close()
