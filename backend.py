@@ -116,6 +116,7 @@ MIN_ACTIVITIES = 5
 class LoginRequest(BaseModel):
     username: str
     password: str
+    role: str = "Student" # Default to Student to avoid breaking legacy clients if any, though frontend always sends it now
 
 class LoginResponse(BaseModel):
     success: bool = True
@@ -755,20 +756,24 @@ def check_permission(user_role: str, required_permission: str) -> bool:
     return required_permission in ROLE_PERMISSIONS[user_role]
 
 async def verify_permission(permission: str, x_user_role: str = Header(None, alias="X-User-Role"), x_user_id: str = Header(None, alias="X-User-Id")):
-    if not x_user_role:
-        if x_user_id:
-            conn = get_db_connection()
-            user = conn.execute("SELECT role FROM students WHERE id = ?", (x_user_id,)).fetchone()
-            conn.close()
-            if user:
-                x_user_role = user['role']
-            else:
-                raise HTTPException(status_code=401, detail="User not found")
-        else:
-             raise HTTPException(status_code=401, detail="Authentication required")
+    # SECURITY FIX: Trust only the database role, ignore the client-provided header
+    if not x_user_id:
+         raise HTTPException(status_code=401, detail="Authentication required")
 
-    if not check_permission(x_user_role, permission):
-        log_auth_event(x_user_id or "unknown", "Unauthorized Access", f"Missing permission: {permission}")
+    conn = get_db_connection()
+    try:
+        user = conn.execute("SELECT role FROM students WHERE id = ?", (x_user_id,)).fetchone()
+    finally:
+        conn.close()
+
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    # Use the source of truth from DB
+    current_role = user['role']
+
+    if not check_permission(current_role, permission):
+        log_auth_event(x_user_id, "Unauthorized Access", f"Missing permission: {permission}")
         raise HTTPException(status_code=403, detail=f"Permission denied: {permission} required.")
     
     return True
@@ -888,6 +893,20 @@ async def login_user(request: LoginRequest):
         logger.warning(f"Login failed for user: {request.username} - User not found")
         log_auth_event(request.username, "Login Failed", "User not found")
         raise HTTPException(status_code=401, detail="Invalid credentials.")
+
+    # Enforce Role Match
+    # Exception: Admins can log in to Teacher portal
+    allow_login = False
+    if user['role'] == request.role:
+        allow_login = True
+    elif user['role'] == 'Admin' and request.role == 'Teacher':
+        allow_login = True
+        
+    if not allow_login:
+        conn.close()
+        logger.warning(f"Role mismatch for {request.username}. DB={user['role']}, Req={request.role}")
+        log_auth_event(request.username, "Login Failed", f"Role Mismatch: Tried {request.role} as {user['role']}")
+        raise HTTPException(status_code=403, detail=f"Access Denied: You are registered as a {user['role']}, not a {request.role}.")
 
     # Check Account Lockout
     if user['locked_until']:
@@ -1189,21 +1208,56 @@ async def google_login(request: SocialTokenRequest):
 @app.post("/api/auth/microsoft-login", response_model=LoginResponse)
 async def microsoft_login(request: SocialTokenRequest):
     logger.info("Processing Microsoft Login")
-    user_email = "ms_user@example.com"
     
+    # Check if this is a Simulated Token (starts with 'token_')
+    if request.token.startswith("token_"):
+        # Extract unique part from simulated token for uniqueness
+        unique_suffix = request.token.split("_")[-1] if "_" in request.token else str(random.randint(1000,9999))
+        user_email = f"ms_user_{unique_suffix}@example.com"
+        user_name = f"Microsoft User {unique_suffix}"
+    else:
+        # REAL TOKEN LOGIC: Verify via Microsoft Graph API
+        # The frontend sends an Access Token for Graph API (User.Read scope).
+        # We verify it by successfully calling the /me endpoint.
+        try:
+            graph_response = requests.get(
+                "https://graph.microsoft.com/v1.0/me",
+                headers={"Authorization": f"Bearer {request.token}"}
+            )
+            
+            if graph_response.status_code != 200:
+                 logger.error(f"Graph API Failed: {graph_response.text}")
+                 raise HTTPException(status_code=401, detail="Invalid Microsoft Token")
+
+            graph_data = graph_response.json()
+            # Use 'mail' (email) or 'userPrincipalName' (UPN) as the unique ID
+            user_email = graph_data.get('mail') or graph_data.get('userPrincipalName')
+            user_name = graph_data.get('displayName', 'Microsoft User')
+            
+            if not user_email:
+                 raise ValueError("No email found in Microsoft account")
+                 
+        except Exception as e:
+             logger.error(f"Microsoft Login Validation Error: {e}")
+             raise HTTPException(status_code=401, detail="Microsoft Authentication Failed")
+
     conn = get_db_connection()
-    user = conn.execute("SELECT id FROM students WHERE id = ?", (user_email,)).fetchone()
+    user = conn.execute("SELECT id, role FROM students WHERE id = ?", (user_email,)).fetchone()
     
-    if not user:
-        conn.execute("INSERT INTO students (id, name, grade, preferred_subject, attendance_rate, home_language, password, math_score, science_score, english_language_score) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                     (user_email, "Microsoft User", 9, "Math", 100.0, "English", "social_login", 0.0, 0.0, 0.0))
+    role = 'Student'
+    if user:
+         role = user['role']
+    else:
+        # Auto-register new user
+        conn.execute("INSERT INTO students (id, name, grade, preferred_subject, attendance_rate, home_language, password, math_score, science_score, english_language_score, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                     (user_email, user_name, 9, "Math", 100.0, "English", "social_login", 0.0, 0.0, 0.0, 'Student'))
         conn.commit()
         log_auth_event(user_email, "Register Success", "Microsoft Auto-Register")
 
     conn.close()
     
     log_auth_event(user_email, "Login Success", "Microsoft Login")
-    return LoginResponse(user_id=user_email, role='Student')
+    return LoginResponse(user_id=user_email, role=role)
 
 @app.post("/api/auth/social-login", response_model=LoginResponse)
 async def generic_social_login(request: GenericSocialRequest):
@@ -1280,9 +1334,7 @@ async def get_teacher_overview(
     x_user_role: str = Header(None, alias="X-User-Role"),
     x_user_id: str = Header(None, alias="X-User-Id")
 ):
-    if not check_permission(x_user_role, "view_all_grades"):
-        log_auth_event(x_user_id or "unknown", "Unauthorized Access", "Attempted to view teacher overview")
-        raise HTTPException(status_code=403, detail="Permission denied.")
+    await verify_permission("view_all_grades", x_user_id=x_user_id)
 
     students_df = fetch_data_df("SELECT id, name, grade, preferred_subject, attendance_rate, home_language, math_score, science_score, english_language_score FROM students WHERE role = 'Student'")
     
@@ -1323,8 +1375,21 @@ async def add_new_student(
     x_user_role: str = Header(None, alias="X-User-Role"), 
     x_user_id: str = Header(None, alias="X-User-Id")
 ):
-    if not check_permission(x_user_role, "manage_users") and not check_permission(x_user_role, "invite_students"):
-         log_auth_event(x_user_id or "unknown", "Unauthorized Access", "Attempted to add student without permission")
+    if not x_user_id:
+         raise HTTPException(status_code=401, detail="Authentication required")
+         
+    conn = get_db_connection()
+    try:
+        user = conn.execute("SELECT role FROM students WHERE id = ?", (x_user_id,)).fetchone()
+    finally:
+        conn.close()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+        
+    real_role = user['role']
+
+    if not check_permission(real_role, "manage_users") and not check_permission(real_role, "invite_students"):
+         log_auth_event(x_user_id, "Unauthorized Access", "Attempted to add student without permission")
          raise HTTPException(status_code=403, detail="Permission denied. You cannot add students.")
 
     conn = get_db_connection()
@@ -1368,9 +1433,7 @@ async def update_student(
     x_user_role: str = Header(None, alias="X-User-Role"),
     x_user_id: str = Header(None, alias="X-User-Id")
 ):
-    if not check_permission(x_user_role, "edit_all_grades"):
-        log_auth_event(x_user_id or "unknown", "Unauthorized Access", "Attempted to edit student without permission")
-        raise HTTPException(status_code=403, detail="Permission denied.")
+    await verify_permission("edit_all_grades", x_user_id=x_user_id)
 
     conn = get_db_connection()
     try:
@@ -1428,14 +1491,26 @@ async def add_new_activity(
     x_user_role: str = Header(None, alias="X-User-Role"),
     x_user_id: str = Header(None, alias="X-User-Id")
 ):
+    if not x_user_id:
+         raise HTTPException(status_code=401, detail="Authentication required")
+         
+    conn = get_db_connection()
+    try:
+        user = conn.execute("SELECT role FROM students WHERE id = ?", (x_user_id,)).fetchone()
+    finally:
+        conn.close()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    real_role = user['role']
+
     # Allow if Teacher/Admin (edit_all_grades) OR if Student adding their own activity
-    has_permission = check_permission(x_user_role, "edit_all_grades")
+    has_permission = check_permission(real_role, "edit_all_grades")
     if not has_permission:
-        if x_user_role == "Student" and str(request.student_id) == str(x_user_id):
+        if real_role == "Student" and str(request.student_id) == str(x_user_id):
             has_permission = True
     
     if not has_permission:
-         log_auth_event(x_user_id or "unknown", "Unauthorized Access", "Attempted to add activity without permission")
+         log_auth_event(x_user_id, "Unauthorized Access", "Attempted to add activity without permission")
          raise HTTPException(status_code=403, detail="Permission denied.")
 
     conn = get_db_connection()
@@ -1564,9 +1639,7 @@ async def create_group(
     x_user_role: str = Header(None, alias="X-User-Role"),
     x_user_id: str = Header(None, alias="X-User-Id")
 ):
-    if not check_permission(x_user_role, "manage_groups"):
-         log_auth_event(x_user_id or "unknown", "Unauthorized Access", "Attempted to create group without permission")
-         raise HTTPException(status_code=403, detail="Permission denied.")
+    await verify_permission("manage_groups", x_user_id=x_user_id)
 
     conn = get_db_connection()
     try:
@@ -1622,7 +1695,8 @@ async def get_group_members(group_id: int):
     return {"group": dict(group), "members": member_ids}
 
 @app.post("/api/groups/{group_id}/members")
-async def update_group_members(group_id: int, request: GroupMemberUpdateRequest):
+async def update_group_members(group_id: int, request: GroupMemberUpdateRequest, x_user_id: str = Header(None, alias="X-User-Id")):
+    await verify_permission("manage_groups", x_user_id=x_user_id)
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
@@ -1643,7 +1717,8 @@ async def update_group_members(group_id: int, request: GroupMemberUpdateRequest)
         conn.close()
 
 @app.post("/api/groups/{group_id}/materials")
-async def add_group_material(group_id: int, request: MaterialCreateRequest):
+async def add_group_material(group_id: int, request: MaterialCreateRequest, x_user_id: str = Header(None, alias="X-User-Id")):
+    await verify_permission("manage_groups", x_user_id=x_user_id)
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
@@ -1692,7 +1767,8 @@ async def get_student_assignments(student_id: str):
 # --- ASSIGNMENTS & PROJECT MANAGEMENT ---
 
 @app.post("/api/groups/{group_id}/assignments")
-async def create_assignment(group_id: int, request: AssignmentCreateRequest):
+async def create_assignment(group_id: int, request: AssignmentCreateRequest, x_user_id: str = Header(None, alias="X-User-Id")):
+    await verify_permission("manage_groups", x_user_id=x_user_id)
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("INSERT INTO assignments (group_id, title, description, due_date, type, points) VALUES (?, ?, ?, ?, ?, ?)",
@@ -1710,7 +1786,10 @@ async def get_group_assignments(group_id: int):
     return [AssignmentResponse(**dict(row)) for row in data]
 
 @app.post("/api/assignments/{assignment_id}/submit")
-async def submit_assignment(assignment_id: int, request: SubmissionCreateRequest):
+async def submit_assignment(assignment_id: int, request: SubmissionCreateRequest, x_user_id: str = Header(None, alias="X-User-Id")):
+    if not x_user_id: raise HTTPException(status_code=401, detail="Authentication required")
+    if str(request.student_id) != str(x_user_id):
+          raise HTTPException(status_code=403, detail="Cannot submit for another student.")
     conn = get_db_connection()
     cursor = conn.cursor()
     submitted_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -1729,7 +1808,8 @@ async def submit_assignment(assignment_id: int, request: SubmissionCreateRequest
     return {"message": "Assignment submitted successfully."}
 
 @app.get("/api/assignments/{assignment_id}/submissions", response_model=List[SubmissionResponse])
-async def get_assignment_submissions(assignment_id: int):
+async def get_assignment_submissions(assignment_id: int, x_user_id: str = Header(None, alias="X-User-Id")):
+    await verify_permission("view_all_grades", x_user_id=x_user_id)
     conn = get_db_connection()
     query = """
         SELECT s.*, st.name as student_name 
@@ -1742,7 +1822,8 @@ async def get_assignment_submissions(assignment_id: int):
     return [SubmissionResponse(**dict(row)) for row in data]
 
 @app.post("/api/submissions/{submission_id}/grade")
-async def grade_submission(submission_id: int, request: GradeSubmissionRequest):
+async def grade_submission(submission_id: int, request: GradeSubmissionRequest, x_user_id: str = Header(None, alias="X-User-Id")):
+    await verify_permission("edit_all_grades", x_user_id=x_user_id)
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute("UPDATE submissions SET grade = ?, feedback = ? WHERE id = ?", (request.grade, request.feedback, submission_id))
@@ -1763,9 +1844,7 @@ async def schedule_class(
     x_user_role: str = Header(None, alias="X-User-Role"),
     x_user_id: str = Header(None, alias="X-User-Id")
 ):
-    if not check_permission(x_user_role, "schedule_active_class"):
-         log_auth_event(x_user_id or "unknown", "Unauthorized Access", "Attempted to schedule class without permission")
-         raise HTTPException(status_code=403, detail="Permission denied.")
+    await verify_permission("schedule_active_class", x_user_id=x_user_id)
 
     conn = get_db_connection()
     try:
@@ -1907,9 +1986,7 @@ async def start_class(
     x_user_role: str = Header(None, alias="X-User-Role"),
     x_user_id: str = Header(None, alias="X-User-Id")
 ):
-    if not check_permission(x_user_role, "schedule_active_class"):
-         log_auth_event(x_user_id or "unknown", "Unauthorized Access", "Attempted to start class without permission")
-         raise HTTPException(status_code=403, detail="Permission denied.")
+    await verify_permission("schedule_active_class", x_user_id=x_user_id)
 
     CLASS_SESSION["is_active"] = True
     CLASS_SESSION["meet_link"] = request.meet_link
@@ -1960,10 +2037,10 @@ async def websocket_endpoint(websocket: WebSocket):
 
 @app.get("/api/teacher/export-grades-csv")
 async def export_grades_csv(
-    x_user_role: str = Header(None, alias="X-User-Role")
+    x_user_role: str = Header(None, alias="X-User-Role"),
+    x_user_id: str = Header(None, alias="X-User-Id")
 ):
-    if not check_permission(x_user_role, "view_all_grades"):
-         raise HTTPException(status_code=403, detail="Permission denied.")
+    await verify_permission("view_all_grades", x_user_id=x_user_id)
 
     conn = get_db_connection()
     try:
@@ -2176,9 +2253,7 @@ async def get_audit_logs(
     x_user_role: str = Header(None, alias="X-User-Role"),
     x_user_id: str = Header(None, alias="X-User-Id")
 ):
-    if not check_permission(x_user_role, "view_audit_logs"):
-         log_auth_event(x_user_id or "unknown", "Unauthorized Access", "Attempted to view audit logs")
-         raise HTTPException(status_code=403, detail="Permission denied.")
+    await verify_permission("view_audit_logs", x_user_id=x_user_id)
 
     conn = get_db_connection()
     try:
