@@ -7,3 +7,5 @@ groq
 pydantic
 python-multipart
 requests
+google-generativeai
+google-generativeai
