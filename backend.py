@@ -105,14 +105,12 @@ origins = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
     "https://backend1-bzh1.onrender.com",
-    "https://www.backend1-bzh1.onrender.com",
-    "https://ed-tech-portal.vercel.app",
-    "https://ed-tech-portal.vercel.app/"
+    "https://www.backend1-bzh1.onrender.com"
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins, 
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -1011,7 +1009,6 @@ async def login_user(request: LoginRequest):
             logger.warning(f"Login failed for user: {request.username} - Invalid password.")
             log_auth_event(request.username, "Login Failed", f"Invalid password.")
             raise HTTPException(status_code=401, detail=f"Invalid credentials. {remaining} attempts remaining.")
-
 @app.post("/api/auth/verify-2fa", response_model=LoginResponse)
 async def verify_backup_code(request: Verify2FARequest):
     conn = get_db_connection()
