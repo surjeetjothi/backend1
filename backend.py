@@ -2396,7 +2396,7 @@ async def submit_quiz(quiz_id: int, request: QuizSubmitRequest):
     
     if not quiz:
         conn.close()
-        raise HTTPException(status_code=404, detail="Quiz not found")
+        raise HTTPException(status_code=404, detail="Quiz not found") 
         
     questions = json.loads(quiz['questions'])
     score = 0
