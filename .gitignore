@@ -1,10 +1,7 @@
 __pycache__/
 *.pyc
 .env
-*.db
-*.sqlite3
-.DS_Store
-venv/
-env/
-static/resources/*
-!static/resources/.keep
+# Allowing databases and resources as requested
+# *.db 
+# *.sqlite3
+# static/resources/*
