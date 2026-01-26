@@ -1,0 +1,790 @@
+id,student_id,date,topic,difficulty,score,time_spent_min
+1,S001,2025-11-01,Algebra,Medium,95.0,10
+2,S001,2025-11-03,Geometry,Medium,65.0,25
+3,S002,2025-11-01,Physics,Medium,40.0,45
+4,S002,2025-11-02,Chemistry,Easy,55.0,30
+5,HARISH,2025-11-10,Reading,Easy,80.0,15
+7,S001,2026-01-02,Article,Easy,70.0,40
+95,student_g1_1,2025-12-25T11:13:35.222282,Math: Algebra,Hard,87.0,47
+96,student_g1_1,2026-01-08T11:13:35.222285,Science: Photosynthesis,Hard,87.0,14
+97,student_g1_1,2025-12-22T11:13:35.222287,Science: Photosynthesis,Hard,90.0,44
+98,student_g1_1,2026-01-14T11:13:35.222291,Math: Algebra,Easy,65.0,23
+99,student_g1_1,2025-12-25T11:13:35.222294,Science: Photosynthesis,Hard,83.0,28
+100,student_g1_2,2025-12-26T11:13:35.222297,English: Grammar,Hard,100.0,56
+101,student_g1_2,2025-12-26T11:13:35.222299,English: Grammar,Medium,100.0,31
+102,student_g1_2,2025-12-30T11:13:35.222302,English: Grammar,Medium,83.0,40
+103,student_g1_3,2025-12-28T11:13:35.222305,Science: Photosynthesis,Hard,72.0,13
+104,student_g1_3,2026-01-06T11:13:35.222308,Math: Algebra,Medium,80.0,43
+105,student_g1_3,2025-12-30T11:13:35.222311,Science: Photosynthesis,Easy,65.0,26
+106,student_g1_4,2025-12-25T11:13:35.222313,Math: Algebra,Hard,76.0,23
+107,student_g1_4,2026-01-07T11:13:35.222316,History: WWII,Easy,61.0,45
+108,student_g1_4,2026-01-01T11:13:35.222319,English: Grammar,Medium,74.0,21
+109,student_g1_4,2026-01-13T11:13:35.222322,Math: Algebra,Medium,98.0,14
+110,student_g1_5,2026-01-13T11:13:35.222325,Science: Photosynthesis,Easy,84.0,42
+111,student_g1_5,2025-12-24T11:13:35.222328,Science: Photosynthesis,Medium,69.0,22
+112,student_g1_5,2025-12-16T11:13:35.222330,English: Grammar,Hard,80.0,18
+113,student_g1_5,2026-01-01T11:13:35.222333,History: WWII,Easy,94.0,30
+114,student_g1_6,2026-01-09T11:13:35.222336,Math: Algebra,Medium,82.0,21
+115,student_g1_6,2025-12-26T11:13:35.222339,Science: Photosynthesis,Hard,88.0,19
+116,student_g1_6,2025-12-18T11:13:35.222343,History: WWII,Easy,62.0,24
+117,student_g1_6,2025-12-20T11:13:35.222345,Science: Photosynthesis,Easy,74.0,50
+118,student_g1_7,2026-01-14T11:13:35.222348,Math: Algebra,Hard,72.0,44
+119,student_g1_7,2026-01-12T11:13:35.222351,Math: Algebra,Hard,73.0,46
+120,student_g1_7,2025-12-28T11:13:35.222354,English: Grammar,Hard,99.0,48
+121,student_g1_7,2026-01-05T11:13:35.222357,History: WWII,Easy,84.0,57
+122,student_g1_8,2025-12-18T11:13:35.222360,History: WWII,Easy,91.0,25
+123,student_g1_8,2026-01-15T11:13:35.222362,English: Grammar,Medium,99.0,32
+124,student_g1_8,2026-01-11T11:13:35.222365,Science: Photosynthesis,Medium,92.0,15
+125,student_g1_8,2025-12-19T11:13:35.222368,Science: Photosynthesis,Medium,71.0,59
+126,student_g1_8,2026-01-08T11:13:35.222371,Science: Photosynthesis,Medium,66.0,15
+127,student_g1_9,2025-12-30T11:13:35.222374,Science: Photosynthesis,Easy,73.0,45
+128,student_g1_9,2025-12-28T11:13:35.222376,Science: Photosynthesis,Medium,71.0,17
+129,student_g1_9,2026-01-07T11:13:35.222380,Science: Photosynthesis,Hard,79.0,40
+130,student_g1_10,2025-12-23T11:13:35.222383,History: WWII,Easy,95.0,19
+131,student_g1_10,2025-12-20T11:13:35.222386,English: Grammar,Easy,97.0,54
+132,student_g1_10,2025-12-19T11:13:35.222389,Math: Algebra,Medium,79.0,58
+133,student_g1_10,2026-01-08T11:13:35.222392,English: Grammar,Medium,71.0,50
+170,SURJEET,2025-11-12,Physics,Medium,88.0,45
+171,SURJEET,2025-11-14,Chemistry,Hard,76.5,60
+172,SURJEET,2025-11-15,Biology,Easy,92.0,30
+173,SURJEET,2025-11-16,Maths,Hard,85.0,50
+174,SURJEET,2025-11-18,English,Medium,90.0,40
+175,DEVA,2025-11-12,Tamil,Medium,95.0,30
+176,DEVA,2025-11-13,English,Hard,82.0,45
+177,DEVA,2025-11-14,Maths,Medium,88.0,50
+595,student_g1_2,2025-12-03,Science,Medium,93.4,19
+596,student_g1_2,2025-12-19,English,Medium,94.1,38
+597,student_g1_2,2025-11-29,Geography,Medium,76.2,33
+598,student_g1_2,2025-11-26,History,Hard,62.5,52
+599,student_g1_2,2026-01-18,Science,Easy,77.8,29
+600,student_g1_2,2025-12-09,Physics,Hard,54.0,34
+601,student_g1_3,2025-11-24,English,Hard,30.3,32
+602,student_g1_3,2026-01-11,History,Hard,44.3,33
+603,student_g1_3,2025-12-14,Math,Medium,92.8,32
+604,student_g1_3,2025-12-01,History,Medium,60.4,17
+605,student_g1_3,2025-11-28,English,Easy,99.4,55
+606,student_g1_3,2025-12-07,Chemistry,Medium,55.8,46
+607,student_g1_3,2025-12-03,Geography,Hard,54.5,57
+608,student_g1_3,2025-11-24,Math,Medium,56.3,39
+609,student_g1_3,2025-12-25,Physics,Hard,57.9,22
+610,student_g1_4,2026-01-05,Chemistry,Medium,83.0,27
+611,student_g1_4,2025-12-29,Math,Medium,64.9,51
+612,student_g1_4,2025-11-26,Chemistry,Easy,89.6,15
+613,student_g1_4,2026-01-06,English,Hard,79.7,37
+614,student_g1_4,2026-01-19,History,Hard,42.6,32
+615,student_g1_4,2025-11-24,Geography,Medium,64.1,29
+616,student_g1_5,2026-01-22,Science,Medium,68.2,54
+617,student_g1_6,2026-01-13,Geography,Medium,93.5,44
+618,student_g1_6,2025-12-23,Geography,Medium,79.3,41
+619,student_g1_6,2025-12-17,Physics,Hard,46.2,20
+620,student_g1_7,2026-01-12,Geography,Medium,63.0,15
+621,student_g1_7,2025-11-26,Math,Easy,78.9,59
+622,student_g1_7,2025-12-06,Geography,Easy,90.8,38
+623,student_g1_7,2025-12-27,English,Hard,89.2,58
+624,student_g1_7,2025-12-17,History,Medium,54.1,22
+625,student_g1_7,2025-12-30,English,Easy,76.5,58
+626,student_g1_7,2025-12-18,Math,Easy,98.9,28
+627,student_g1_7,2026-01-10,Physics,Hard,85.8,20
+628,student_g1_8,2025-12-19,Physics,Medium,81.2,52
+629,student_g1_8,2026-01-08,Physics,Hard,45.4,55
+630,student_g1_8,2026-01-14,Physics,Medium,66.8,19
+631,student_g1_8,2026-01-06,Science,Easy,97.4,25
+632,student_g1_8,2026-01-01,English,Easy,73.9,23
+633,student_g1_9,2025-12-15,Math,Medium,50.8,36
+634,student_g1_9,2025-12-13,Chemistry,Hard,87.3,60
+635,student_g1_9,2026-01-16,Geography,Easy,84.7,40
+636,student_g1_9,2025-12-15,English,Hard,38.1,47
+637,student_g1_9,2026-01-05,Geography,Easy,93.7,15
+638,student_g1_9,2025-11-26,History,Medium,83.6,59
+639,student_g1_9,2025-12-16,Chemistry,Hard,50.4,40
+640,student_g1_10,2026-01-22,Chemistry,Medium,83.2,18
+641,student_g1_10,2026-01-11,Geography,Medium,75.1,58
+642,student_g1_10,2025-12-23,English,Easy,83.8,41
+643,student_g2_1,2026-01-04,Math,Easy,95.6,24
+644,student_g2_1,2026-01-01,Geography,Hard,87.9,34
+645,student_g2_1,2025-12-08,Chemistry,Hard,32.0,28
+646,student_g2_1,2025-12-16,History,Easy,93.8,45
+647,student_g2_1,2025-12-29,Math,Hard,55.6,40
+648,student_g2_2,2026-01-05,Physics,Medium,75.0,37
+649,student_g2_2,2026-01-07,Math,Easy,94.4,16
+650,student_g2_2,2025-12-30,Physics,Easy,91.4,54
+651,student_g2_2,2026-01-15,Science,Easy,80.4,44
+652,student_g2_2,2025-12-21,Chemistry,Medium,91.3,28
+653,student_g2_2,2025-12-03,Geography,Easy,92.1,50
+654,student_g2_2,2026-01-18,Physics,Hard,65.2,57
+655,student_g2_2,2025-12-03,Physics,Hard,89.3,58
+656,student_g2_2,2025-12-17,Math,Easy,87.1,56
+657,student_g2_2,2025-12-11,Chemistry,Easy,71.5,47
+658,student_g2_3,2025-11-29,Geography,Hard,51.1,30
+659,student_g2_3,2025-12-01,Geography,Easy,97.7,39
+660,student_g2_3,2025-12-07,English,Easy,77.3,32
+661,student_g2_3,2025-12-08,Math,Hard,72.2,19
+662,student_g2_3,2026-01-06,Chemistry,Easy,84.7,50
+663,student_g2_3,2025-12-17,English,Easy,88.6,59
+664,student_g2_4,2026-01-21,Chemistry,Medium,68.9,56
+665,student_g2_4,2026-01-08,English,Easy,88.7,29
+666,student_g2_4,2025-12-06,English,Medium,78.5,59
+667,student_g2_4,2025-12-04,Math,Hard,40.6,45
+668,student_g2_4,2025-12-26,Geography,Medium,72.1,47
+669,student_g2_4,2025-12-25,Physics,Easy,87.1,30
+670,student_g2_4,2026-01-08,English,Easy,98.2,34
+671,student_g2_4,2026-01-18,Chemistry,Easy,73.1,41
+672,student_g2_4,2026-01-07,Math,Easy,75.0,56
+673,student_g2_4,2025-11-25,Geography,Medium,93.5,56
+674,student_g2_4,2025-12-27,History,Hard,70.9,33
+675,student_g2_4,2025-12-04,History,Easy,90.0,46
+676,student_g2_5,2026-01-14,Geography,Medium,64.6,20
+677,student_g2_5,2025-11-30,Geography,Medium,70.0,55
+678,student_g2_5,2025-12-08,Geography,Easy,72.5,46
+679,student_g2_5,2025-11-30,Math,Easy,70.9,58
+680,student_g2_5,2025-12-08,Physics,Hard,61.4,45
+681,student_g2_5,2025-12-23,Chemistry,Easy,90.9,60
+682,student_g2_5,2026-01-15,History,Medium,90.6,29
+683,student_g2_5,2025-11-24,English,Medium,61.6,46
+684,student_g2_6,2026-01-12,Math,Medium,94.4,41
+685,student_g2_6,2025-12-26,Geography,Easy,97.5,58
+686,student_g2_6,2026-01-15,Chemistry,Easy,73.0,56
+687,student_g2_6,2026-01-12,Chemistry,Medium,88.3,50
+688,student_g2_6,2026-01-04,Math,Hard,87.1,16
+689,student_g2_6,2025-12-19,Chemistry,Easy,76.4,39
+690,student_g2_6,2025-11-27,Physics,Easy,88.5,33
+691,student_g2_6,2026-01-06,Science,Medium,71.9,42
+692,student_g2_6,2025-12-10,Physics,Hard,64.9,23
+693,student_g2_6,2026-01-05,Chemistry,Medium,58.1,55
+694,student_g2_6,2025-12-15,Math,Medium,69.4,28
+695,student_g2_7,2026-01-20,Geography,Medium,68.9,34
+696,student_g2_7,2026-01-16,Chemistry,Hard,73.6,45
+697,student_g2_7,2026-01-01,Chemistry,Medium,89.6,55
+698,student_g2_7,2025-11-27,Geography,Medium,66.5,53
+699,student_g2_7,2025-12-18,History,Easy,79.5,60
+700,student_g2_7,2025-12-18,Physics,Medium,74.7,55
+701,student_g2_7,2025-12-30,Science,Medium,58.6,59
+702,student_g2_7,2025-12-07,Physics,Easy,90.0,53
+703,student_g2_7,2026-01-11,History,Easy,86.6,52
+704,student_g2_7,2026-01-19,Geography,Hard,74.1,29
+705,student_g2_8,2026-01-20,Science,Hard,37.1,49
+706,student_g2_8,2025-12-26,Science,Medium,91.7,54
+707,student_g2_8,2026-01-15,Chemistry,Easy,84.3,44
+708,student_g2_8,2025-12-16,Geography,Medium,62.5,29
+709,student_g2_8,2026-01-02,Chemistry,Medium,81.2,58
+710,student_g2_8,2026-01-16,Math,Hard,50.9,37
+711,student_g2_9,2025-11-27,Math,Hard,39.3,37
+712,student_g2_9,2025-12-04,Science,Easy,89.7,58
+713,student_g2_9,2026-01-09,Math,Medium,87.7,54
+714,student_g2_9,2026-01-02,Math,Hard,52.1,51
+715,student_g2_9,2025-11-24,Physics,Hard,52.5,20
+716,student_g2_9,2025-11-25,Physics,Hard,33.5,43
+717,student_g2_9,2025-12-25,Science,Hard,80.9,34
+718,student_g2_9,2025-12-26,Math,Hard,47.6,21
+719,student_g2_9,2025-12-23,Chemistry,Hard,74.0,18
+720,student_g2_10,2025-12-29,Physics,Hard,65.3,23
+721,student_g2_10,2026-01-20,Physics,Medium,94.9,22
+722,student_g2_10,2026-01-19,Chemistry,Medium,51.6,47
+723,student_g2_10,2026-01-21,Chemistry,Medium,91.4,46
+724,student_g2_10,2025-12-07,English,Easy,90.7,37
+725,student_g2_10,2025-12-23,English,Easy,95.3,54
+726,student_g3_1,2025-12-22,Chemistry,Easy,74.5,18
+727,student_g3_1,2026-01-20,History,Easy,72.4,17
+728,student_g3_1,2025-12-29,Geography,Medium,54.0,19
+729,student_g3_1,2025-11-29,Physics,Medium,81.8,54
+730,student_g3_1,2025-12-20,Science,Medium,52.2,28
+731,student_g3_1,2025-12-18,Physics,Medium,76.1,19
+732,student_g3_1,2025-12-30,Chemistry,Hard,56.6,43
+733,student_g3_1,2026-01-12,History,Hard,41.1,42
+734,student_g3_1,2025-12-29,History,Medium,89.7,55
+735,student_g3_1,2026-01-11,Chemistry,Medium,68.8,19
+736,student_g3_1,2025-12-10,Science,Medium,71.8,27
+737,student_g3_1,2025-12-14,Chemistry,Medium,89.0,29
+738,student_g3_2,2025-12-13,Geography,Easy,71.2,27
+739,student_g3_2,2025-12-04,Science,Easy,79.5,40
+740,student_g3_2,2025-12-25,English,Medium,80.3,41
+741,student_g3_2,2026-01-15,Physics,Medium,87.8,36
+742,student_g3_2,2025-12-03,Science,Easy,83.0,46
+743,student_g3_2,2025-11-24,History,Easy,96.8,21
+744,student_g3_2,2025-12-08,Geography,Hard,39.8,16
+745,student_g3_2,2025-12-04,Physics,Medium,83.6,27
+746,student_g3_3,2026-01-02,History,Easy,75.2,46
+747,student_g3_3,2025-12-14,Chemistry,Hard,89.3,27
+748,student_g3_3,2025-12-04,Chemistry,Medium,94.6,55
+749,student_g3_3,2025-11-27,Physics,Medium,51.8,15
+750,student_g3_3,2026-01-22,Math,Hard,48.4,59
+751,student_g3_3,2025-12-21,Geography,Medium,77.9,29
+752,student_g3_3,2026-01-05,Physics,Medium,87.2,53
+753,student_g3_3,2026-01-14,Science,Medium,70.8,44
+754,student_g3_4,2026-01-03,English,Easy,74.6,50
+755,student_g3_4,2026-01-17,Geography,Medium,62.0,57
+756,student_g3_4,2026-01-01,History,Medium,71.6,38
+757,student_g3_4,2026-01-09,Science,Hard,54.0,39
+758,student_g3_4,2025-11-26,Geography,Easy,82.8,60
+759,student_g3_4,2025-12-26,Geography,Medium,75.3,51
+760,student_g3_4,2026-01-06,History,Easy,86.2,56
+761,student_g3_4,2026-01-23,Geography,Hard,38.5,25
+762,student_g3_4,2025-11-25,English,Hard,33.3,29
+763,student_g3_4,2025-12-05,Chemistry,Hard,79.2,38
+764,student_g3_5,2026-01-22,Physics,Easy,88.1,25
+765,student_g3_5,2025-12-18,Chemistry,Medium,68.5,38
+766,student_g3_5,2025-12-13,Chemistry,Hard,49.8,36
+767,student_g3_5,2025-12-25,English,Medium,72.6,41
+768,student_g3_5,2025-12-28,Physics,Medium,50.0,54
+769,student_g3_5,2026-01-18,Physics,Easy,96.6,58
+770,student_g3_6,2026-01-10,English,Medium,90.7,56
+771,student_g3_6,2026-01-07,Chemistry,Hard,30.7,53
+772,student_g3_6,2026-01-09,Science,Hard,32.6,52
+773,student_g3_6,2026-01-21,Science,Hard,62.0,26
+774,student_g3_6,2026-01-09,Chemistry,Hard,56.8,21
+775,student_g3_6,2025-12-21,Science,Easy,74.3,37
+776,student_g3_7,2025-12-18,History,Medium,64.6,37
+777,student_g3_7,2025-12-07,Physics,Medium,60.3,55
+778,student_g3_7,2026-01-16,English,Hard,38.1,19
+779,student_g3_7,2026-01-22,Physics,Medium,80.9,46
+780,student_g3_7,2025-12-11,Physics,Easy,81.1,42
+781,student_g3_7,2025-12-28,History,Medium,76.5,57
+782,student_g3_7,2025-12-25,Math,Easy,96.2,48
+783,student_g3_7,2025-11-25,English,Hard,56.7,55
+784,student_g3_7,2025-11-24,Geography,Medium,88.0,38
+785,student_g3_7,2025-12-10,Physics,Medium,91.5,28
+786,student_g3_7,2025-12-16,Chemistry,Easy,88.4,60
+787,student_g3_8,2026-01-05,Geography,Medium,75.4,58
+788,student_g3_8,2025-12-02,Geography,Hard,82.8,45
+789,student_g3_8,2026-01-07,History,Hard,54.2,18
+790,student_g3_8,2026-01-02,English,Hard,59.2,32
+791,student_g3_8,2026-01-17,English,Easy,91.3,55
+792,student_g3_8,2025-12-18,Science,Medium,73.3,53
+793,student_g3_9,2025-12-27,Geography,Medium,73.6,21
+794,student_g3_9,2025-12-03,Science,Medium,69.0,58
+795,student_g3_9,2026-01-07,Physics,Hard,34.1,16
+796,student_g3_9,2026-01-18,Math,Hard,62.5,26
+797,student_g3_9,2025-12-01,English,Medium,52.3,58
+798,student_g3_9,2026-01-03,History,Medium,75.6,16
+799,student_g3_9,2026-01-03,Math,Medium,81.2,55
+800,student_g3_10,2026-01-08,Chemistry,Easy,78.4,21
+801,student_g3_10,2025-12-01,Chemistry,Hard,58.8,22
+802,student_g3_10,2026-01-08,Physics,Medium,79.9,36
+803,student_g3_10,2025-11-25,Math,Easy,86.0,24
+804,student_g3_10,2025-12-13,Science,Easy,85.6,18
+805,student_g4_1,2026-01-16,English,Hard,34.3,19
+806,student_g4_1,2026-01-02,Chemistry,Easy,74.0,46
+807,student_g4_1,2025-12-02,Science,Hard,73.1,31
+808,student_g4_1,2025-12-09,Geography,Medium,62.5,25
+809,student_g4_1,2026-01-11,Science,Hard,51.1,28
+810,student_g4_1,2025-12-08,Chemistry,Easy,98.1,52
+811,student_g4_1,2025-12-20,History,Hard,58.5,18
+812,student_g4_1,2026-01-02,History,Medium,56.5,19
+813,student_g4_1,2025-12-26,Physics,Easy,94.3,41
+814,student_g4_1,2025-12-30,Physics,Easy,82.8,38
+815,student_g4_1,2025-11-26,Science,Easy,73.1,46
+816,student_g4_2,2026-01-18,Science,Medium,77.5,36
+817,student_g4_2,2025-12-28,Geography,Easy,96.7,50
+818,student_g4_2,2026-01-03,History,Hard,55.8,58
+819,student_g4_2,2026-01-09,Physics,Easy,93.2,24
+820,student_g4_2,2025-11-25,Chemistry,Hard,74.9,15
+821,student_g4_2,2025-12-25,Geography,Hard,44.6,24
+822,student_g4_3,2026-01-06,History,Easy,70.5,49
+823,student_g4_3,2026-01-06,Science,Easy,82.8,39
+824,student_g4_3,2025-12-01,History,Medium,71.2,32
+825,student_g4_3,2025-12-26,Chemistry,Medium,76.1,54
+826,student_g4_3,2026-01-10,Physics,Hard,82.5,58
+827,student_g4_4,2026-01-03,Math,Hard,88.8,24
+828,student_g4_4,2026-01-08,Geography,Hard,44.5,59
+829,student_g4_4,2025-11-27,English,Easy,76.1,43
+830,student_g4_4,2025-11-28,Math,Medium,54.7,58
+831,student_g4_4,2026-01-01,Chemistry,Easy,95.4,41
+832,student_g4_4,2026-01-05,Physics,Medium,89.5,48
+833,student_g4_4,2026-01-23,English,Easy,95.7,44
+834,student_g4_4,2025-12-29,Science,Easy,84.8,42
+835,student_g4_4,2025-12-20,Science,Easy,93.6,53
+836,student_g4_4,2026-01-15,English,Easy,73.7,45
+837,student_g4_5,2025-12-28,English,Medium,94.4,36
+838,student_g4_5,2025-12-17,Math,Hard,65.6,39
+839,student_g4_5,2026-01-02,Chemistry,Medium,82.3,15
+840,student_g4_5,2025-12-23,Chemistry,Hard,87.2,58
+841,student_g4_5,2025-12-01,Chemistry,Hard,61.0,30
+842,student_g4_5,2026-01-01,Geography,Medium,68.5,30
+843,student_g4_5,2025-11-28,History,Hard,48.9,53
+844,student_g4_5,2025-11-25,Geography,Medium,93.1,48
+845,student_g4_5,2025-12-24,Physics,Easy,98.3,25
+846,student_g4_5,2025-12-16,Science,Medium,69.3,54
+847,student_g4_5,2026-01-13,Chemistry,Medium,50.8,17
+848,student_g4_5,2025-12-16,Chemistry,Easy,96.1,52
+849,student_g4_6,2026-01-20,Science,Easy,95.6,37
+850,student_g4_6,2025-12-17,History,Medium,91.0,28
+851,student_g4_6,2025-12-04,Math,Medium,89.6,37
+852,student_g4_6,2025-11-27,Chemistry,Easy,87.7,54
+853,student_g4_6,2026-01-11,Math,Easy,79.7,23
+854,student_g4_6,2025-12-19,Math,Medium,64.9,27
+855,student_g4_6,2025-11-30,Science,Medium,81.4,30
+856,student_g4_6,2025-12-31,Math,Medium,51.7,17
+857,student_g4_6,2025-11-27,Chemistry,Medium,65.8,48
+858,student_g4_6,2026-01-11,Physics,Hard,61.2,48
+859,student_g4_6,2025-12-18,Math,Easy,92.7,58
+860,student_g4_7,2026-01-23,English,Easy,79.0,29
+861,student_g4_7,2025-12-23,History,Hard,81.7,46
+862,student_g4_7,2025-12-15,Science,Medium,64.1,26
+863,student_g4_7,2026-01-02,History,Easy,77.1,15
+864,student_g4_7,2025-11-28,English,Medium,69.4,17
+865,student_g4_8,2026-01-01,English,Easy,85.3,34
+866,student_g4_8,2026-01-04,Physics,Easy,79.5,29
+867,student_g4_8,2025-12-04,Science,Easy,74.1,46
+868,student_g4_8,2025-12-06,Geography,Easy,87.1,51
+869,student_g4_8,2025-11-29,Science,Medium,57.5,47
+870,student_g4_9,2025-12-29,History,Hard,83.8,45
+871,student_g4_9,2025-12-15,English,Easy,88.5,18
+872,student_g4_9,2025-11-28,Geography,Medium,76.4,60
+873,student_g4_9,2026-01-02,Science,Hard,56.2,47
+874,student_g4_9,2026-01-21,Chemistry,Medium,77.1,42
+875,student_g4_9,2026-01-18,Science,Medium,71.4,59
+876,student_g4_9,2026-01-08,Physics,Hard,54.6,38
+877,student_g4_9,2026-01-09,English,Easy,76.0,50
+878,student_g4_9,2025-12-04,Chemistry,Medium,82.8,24
+879,student_g4_9,2025-11-29,Chemistry,Hard,82.6,33
+880,student_g4_10,2026-01-16,Math,Easy,91.7,20
+881,student_g4_10,2025-12-22,Physics,Hard,66.7,18
+882,student_g4_10,2026-01-20,English,Medium,63.6,21
+883,student_g4_10,2025-12-20,Physics,Hard,59.6,33
+884,student_g4_10,2025-12-18,Math,Easy,73.4,40
+885,student_g4_10,2025-11-25,Chemistry,Easy,83.5,50
+886,student_g4_10,2025-12-20,Geography,Medium,87.2,41
+887,student_g4_10,2025-12-24,English,Medium,71.7,44
+888,student_g5_1,2025-12-17,English,Medium,64.1,17
+889,student_g5_1,2025-11-24,Physics,Medium,78.1,60
+890,student_g5_1,2026-01-20,Physics,Medium,84.8,18
+891,student_g5_1,2025-12-29,Science,Easy,76.7,23
+892,student_g5_1,2026-01-03,Chemistry,Easy,90.9,17
+893,student_g5_1,2026-01-06,Geography,Hard,68.5,47
+894,student_g5_1,2025-12-09,Geography,Medium,63.8,52
+895,student_g5_1,2026-01-14,Physics,Medium,51.0,28
+896,student_g5_1,2026-01-23,Chemistry,Medium,92.0,54
+897,student_g5_1,2026-01-13,English,Hard,64.5,29
+898,student_g5_1,2025-12-26,Chemistry,Hard,44.0,27
+899,student_g5_1,2025-12-24,Science,Hard,66.0,15
+900,student_g5_2,2025-12-16,English,Easy,78.1,59
+901,student_g5_2,2026-01-16,Chemistry,Hard,33.7,53
+902,student_g5_2,2025-12-29,Chemistry,Medium,94.1,18
+903,student_g5_2,2025-12-31,History,Medium,84.4,16
+904,student_g5_2,2026-01-08,English,Easy,82.9,29
+905,student_g5_2,2025-12-01,English,Easy,73.4,22
+906,student_g5_2,2025-12-11,Chemistry,Hard,89.1,33
+907,student_g5_2,2026-01-16,Chemistry,Hard,72.0,47
+908,student_g5_2,2025-11-24,Chemistry,Medium,68.6,26
+909,student_g5_2,2025-12-09,Physics,Hard,37.7,43
+910,student_g5_3,2025-12-30,Science,Medium,82.3,39
+911,student_g5_3,2025-11-27,English,Hard,71.9,57
+912,student_g5_3,2026-01-07,Science,Hard,63.1,47
+913,student_g5_3,2025-12-30,English,Easy,74.1,21
+914,student_g5_3,2026-01-03,English,Hard,57.4,60
+915,student_g5_3,2026-01-05,Math,Medium,64.9,32
+916,student_g5_3,2025-12-29,English,Hard,53.5,53
+917,student_g5_4,2025-11-24,Geography,Medium,59.0,55
+918,student_g5_4,2025-12-30,English,Medium,67.3,21
+919,student_g5_4,2025-12-08,Geography,Easy,93.4,57
+920,student_g5_4,2025-12-04,English,Easy,94.9,50
+921,student_g5_4,2025-12-03,Chemistry,Hard,79.0,25
+922,student_g5_4,2026-01-06,Science,Hard,35.8,49
+923,student_g5_4,2025-12-04,Physics,Easy,76.5,40
+924,student_g5_4,2025-12-26,Math,Medium,78.3,48
+925,student_g5_4,2025-12-12,Physics,Easy,85.0,16
+926,student_g5_5,2025-12-25,Science,Medium,87.0,50
+927,student_g5_5,2025-12-30,Physics,Easy,71.8,34
+928,student_g5_5,2026-01-11,English,Easy,76.5,38
+929,student_g5_5,2026-01-15,Science,Hard,36.0,20
+930,student_g5_5,2026-01-18,English,Easy,79.4,45
+931,student_g5_5,2026-01-11,Physics,Medium,83.0,34
+932,student_g5_5,2025-12-17,Physics,Easy,84.7,48
+933,student_g5_5,2025-12-05,Geography,Medium,60.7,41
+934,student_g5_5,2026-01-09,Chemistry,Easy,81.9,50
+935,student_g5_5,2026-01-02,English,Medium,82.8,18
+936,student_g5_5,2025-12-22,Geography,Easy,90.4,51
+937,student_g5_5,2026-01-03,Physics,Hard,72.3,54
+938,student_g5_6,2026-01-21,History,Easy,86.8,58
+939,student_g5_6,2025-12-14,Geography,Hard,43.4,33
+940,student_g5_6,2025-12-09,Science,Medium,66.8,40
+941,student_g5_6,2025-12-13,Chemistry,Easy,85.5,24
+942,student_g5_6,2025-12-30,Geography,Easy,99.2,28
+943,student_g5_7,2025-11-25,Chemistry,Medium,90.2,21
+944,student_g5_7,2026-01-09,History,Hard,81.8,36
+945,student_g5_7,2025-12-25,Chemistry,Easy,85.0,32
+946,student_g5_7,2026-01-12,History,Easy,81.1,57
+947,student_g5_7,2025-12-06,English,Medium,82.0,22
+948,student_g5_7,2026-01-16,Math,Hard,54.3,59
+949,student_g5_7,2025-12-30,English,Medium,66.2,20
+950,student_g5_7,2025-12-11,Chemistry,Hard,65.4,54
+951,student_g5_7,2025-12-04,English,Easy,96.3,26
+952,student_g5_7,2025-12-13,Science,Easy,91.7,29
+953,student_g5_8,2026-01-01,Science,Easy,74.2,55
+954,student_g5_8,2026-01-05,Math,Hard,43.4,25
+955,student_g5_8,2025-12-01,English,Easy,99.4,45
+956,student_g5_8,2025-12-16,Physics,Easy,88.0,60
+957,student_g5_8,2025-12-23,Math,Easy,86.8,22
+958,student_g5_8,2026-01-23,Science,Medium,85.8,45
+959,student_g5_8,2025-12-14,Chemistry,Easy,85.3,19
+960,student_g5_8,2025-12-05,Physics,Easy,77.5,18
+961,student_g5_8,2026-01-02,Math,Easy,75.7,15
+962,student_g5_8,2025-12-27,Physics,Hard,43.3,56
+963,student_g5_8,2025-12-05,Math,Easy,97.4,29
+964,student_g5_9,2025-12-16,History,Easy,71.2,58
+965,student_g5_9,2026-01-14,Math,Medium,53.2,21
+966,student_g5_9,2025-12-07,Physics,Hard,43.8,20
+967,student_g5_9,2026-01-21,Physics,Medium,55.3,31
+968,student_g5_9,2025-12-13,Geography,Easy,71.2,60
+969,student_g5_9,2025-12-23,History,Hard,78.4,49
+970,student_g5_9,2025-12-22,Chemistry,Hard,41.0,55
+971,student_g5_9,2025-12-26,History,Medium,54.6,19
+972,student_g5_9,2025-11-30,History,Easy,74.7,25
+973,student_g5_9,2025-12-25,History,Hard,44.6,47
+974,student_g5_10,2025-12-06,History,Hard,58.8,39
+975,student_g5_10,2025-12-17,Chemistry,Medium,88.4,56
+976,student_g5_10,2026-01-06,Math,Medium,86.1,36
+977,student_g5_10,2026-01-15,English,Medium,76.6,38
+978,student_g5_10,2025-12-14,Math,Medium,85.1,58
+979,student_g5_10,2026-01-22,Science,Hard,72.3,58
+980,student_g5_10,2026-01-07,Geography,Hard,44.9,21
+981,student_g5_10,2025-12-06,Chemistry,Medium,86.3,24
+982,student_g5_10,2025-11-29,English,Medium,54.3,55
+983,student_g5_10,2025-12-24,Math,Hard,50.0,18
+984,S001,2025-12-03,History,Easy,86.8,38
+985,S001,2026-01-20,Science,Medium,66.0,47
+986,S001,2026-01-06,Math,Easy,94.2,30
+987,S001,2026-01-01,Math,Hard,76.5,41
+988,S001,2026-01-15,English,Medium,58.6,60
+989,S001,2025-12-09,Physics,Hard,79.2,52
+990,S001,2025-12-29,Physics,Easy,89.7,50
+991,S002,2025-12-27,History,Easy,95.7,42
+992,S002,2025-12-16,English,Hard,89.2,32
+993,S002,2025-12-25,Physics,Hard,69.8,50
+994,S002,2025-12-13,History,Medium,85.4,24
+995,S002,2026-01-03,Geography,Hard,57.0,21
+996,S002,2025-12-12,History,Easy,99.8,59
+997,S002,2025-11-27,Science,Medium,81.1,19
+998,S002,2026-01-03,Math,Medium,75.5,48
+999,S002,2025-11-25,Chemistry,Easy,92.8,36
+1000,SURJEET,2026-01-08,Science,Medium,63.2,55
+1001,SURJEET,2025-12-07,Math,Hard,63.1,24
+1002,SURJEET,2026-01-22,Geography,Easy,86.2,49
+1003,SURJEET,2025-12-08,English,Medium,53.2,24
+1004,SURJEET,2025-12-05,Math,Easy,94.4,39
+1005,SURJEET,2025-12-05,English,Easy,74.7,43
+1006,DEVA,2025-12-30,Geography,Medium,71.9,56
+1007,DEVA,2025-12-02,Chemistry,Medium,50.1,54
+1008,DEVA,2025-12-02,History,Easy,84.5,22
+1009,DEVA,2025-12-30,Chemistry,Easy,73.1,57
+1010,DEVA,2026-01-11,Chemistry,Medium,90.9,58
+1011,DEVA,2026-01-15,Geography,Hard,47.4,58
+1012,DEVA,2026-01-07,History,Hard,82.2,17
+1013,DEVA,2025-12-31,Math,Medium,79.7,35
+1014,DEVA,2025-12-19,English,Hard,88.7,56
+1015,HARISH,2026-01-19,Physics,Hard,71.7,26
+1016,HARISH,2025-12-14,Physics,Easy,97.0,48
+1017,HARISH,2025-12-13,History,Hard,35.6,30
+1018,HARISH,2025-11-29,History,Hard,87.2,37
+1019,HARISH,2025-12-25,Physics,Hard,52.4,32
+1020,HARISH,2025-12-04,Math,Easy,75.6,47
+1021,HARISH,2026-01-16,Geography,Easy,70.7,53
+1022,HARISH,2026-01-09,Geography,Hard,48.4,55
+1023,HARISH,2026-01-09,Math,Medium,54.7,60
+1024,HARISH,2025-12-27,English,Hard,74.4,59
+1025,student_g1_1,2026-01-23,maths,Medium,85.0,30
+1026,S46160,2026-01-05,Science Lab,Hard,86.0,48
+1027,S46160,2026-01-15,Math Quiz,Easy,78.0,39
+1028,S46160,2026-01-08,Physics Test,Medium,90.0,31
+1029,S46160,2026-01-12,Physics Test,Medium,100.0,18
+1030,S46160,2025-12-25,Science Lab,Medium,62.0,36
+1031,S46160,2025-12-26,Math Quiz,Hard,54.0,45
+1032,S46160,2026-01-10,Science Lab,Medium,99.0,15
+1033,S46160,2025-12-26,Math Quiz,Easy,99.0,34
+1034,S26656,2026-01-21,Math Quiz,Hard,62.0,53
+1035,S26656,2026-01-21,Science Lab,Medium,82.0,22
+1036,S26656,2026-01-03,Science Lab,Hard,93.0,57
+1037,S26656,2026-01-18,English Reading,Easy,70.0,16
+1038,S26656,2026-01-22,Physics Test,Easy,54.0,55
+1039,S26656,2026-01-02,Math Quiz,Medium,72.0,31
+1040,S26656,2025-12-31,Physics Test,Easy,78.0,31
+1041,S26656,2025-12-25,Physics Test,Easy,46.0,40
+1042,S26656,2026-01-14,English Reading,Easy,88.0,58
+1043,S46168,2026-01-01,English Reading,Medium,50.0,27
+1044,S46168,2026-01-12,Math Quiz,Easy,89.0,45
+1045,S46168,2026-01-16,Math Quiz,Hard,99.0,57
+1046,S46168,2026-01-06,Math Quiz,Easy,85.0,27
+1047,S46168,2026-01-18,English Reading,Hard,57.0,27
+1048,S44032,2026-01-24,Science Lab,Easy,43.0,31
+1049,S44032,2026-01-08,Science Lab,Medium,47.0,43
+1050,S44032,2025-12-29,History Essay,Easy,54.0,39
+1051,S44032,2026-01-17,English Reading,Easy,87.0,50
+1052,S44032,2025-12-30,English Reading,Medium,95.0,26
+1053,S44032,2026-01-08,History Essay,Medium,89.0,36
+1054,S44032,2026-01-10,English Reading,Easy,80.0,44
+1055,S44032,2026-01-20,Physics Test,Hard,44.0,20
+1056,S44032,2025-12-27,Science Lab,Easy,96.0,60
+1057,S30626,2026-01-17,Physics Test,Medium,40.0,30
+1058,S30626,2026-01-11,Physics Test,Easy,66.0,51
+1059,S30626,2026-01-15,Math Quiz,Medium,66.0,47
+1060,S30626,2026-01-06,English Reading,Hard,41.0,38
+1061,S30626,2025-12-27,English Reading,Medium,43.0,41
+1062,S30626,2026-01-08,Math Quiz,Medium,52.0,57
+1063,S56077,2026-01-11,Physics Test,Easy,43.0,23
+1064,S56077,2026-01-23,English Reading,Hard,80.0,34
+1065,S56077,2026-01-05,History Essay,Hard,89.0,37
+1066,S56077,2026-01-16,History Essay,Medium,46.0,56
+1067,S56077,2026-01-16,Math Quiz,Hard,64.0,33
+1068,S33726,2026-01-21,Math Quiz,Easy,62.0,36
+1069,S33726,2026-01-16,Physics Test,Hard,67.0,55
+1070,S33726,2025-12-27,History Essay,Easy,73.0,17
+1071,S33726,2025-12-27,History Essay,Medium,85.0,19
+1072,S33726,2026-01-03,History Essay,Easy,66.0,24
+1073,S33726,2026-01-17,Physics Test,Easy,90.0,29
+1074,S99667,2026-01-14,History Essay,Easy,52.0,36
+1075,S99667,2026-01-14,English Reading,Medium,82.0,52
+1076,S99667,2025-12-29,History Essay,Medium,87.0,54
+1077,S99667,2026-01-17,English Reading,Hard,78.0,27
+1078,S99667,2026-01-20,English Reading,Hard,90.0,19
+1079,S99667,2026-01-04,History Essay,Easy,93.0,19
+1080,S99667,2026-01-02,English Reading,Hard,98.0,60
+1081,S99667,2025-12-28,English Reading,Easy,52.0,47
+1082,S99667,2026-01-24,Math Quiz,Easy,50.0,22
+1083,S47492,2026-01-09,English Reading,Hard,50.0,48
+1084,S47492,2026-01-20,Math Quiz,Hard,53.0,17
+1085,S47492,2025-12-29,Math Quiz,Hard,77.0,20
+1086,S47492,2026-01-17,Physics Test,Hard,49.0,57
+1087,S47492,2025-12-27,English Reading,Easy,46.0,46
+1088,S47492,2026-01-14,Math Quiz,Medium,40.0,44
+1089,S88843,2026-01-14,Science Lab,Hard,79.0,59
+1090,S88843,2026-01-01,History Essay,Easy,73.0,44
+1091,S88843,2026-01-11,Science Lab,Medium,77.0,19
+1092,S88843,2026-01-01,Science Lab,Easy,86.0,27
+1093,S88843,2026-01-16,Science Lab,Easy,51.0,45
+1094,S88843,2026-01-06,English Reading,Medium,71.0,49
+1095,S88843,2025-12-31,History Essay,Easy,66.0,20
+1096,S88843,2025-12-29,Physics Test,Medium,87.0,51
+1097,S88843,2026-01-03,Physics Test,Hard,100.0,38
+1098,S88843,2026-01-23,English Reading,Medium,81.0,26
+1099,S72736,2026-01-01,Math Quiz,Easy,49.0,51
+1100,S72736,2026-01-15,Math Quiz,Hard,63.0,42
+1101,S72736,2026-01-22,English Reading,Easy,77.0,34
+1102,S72736,2025-12-27,History Essay,Medium,44.0,22
+1103,S72736,2026-01-18,History Essay,Hard,45.0,45
+1104,S72736,2025-12-29,English Reading,Easy,45.0,40
+1105,S72736,2026-01-08,Math Quiz,Medium,76.0,19
+1106,S72736,2026-01-07,Math Quiz,Hard,99.0,51
+1107,S72736,2026-01-06,Physics Test,Medium,58.0,23
+1108,S72736,2025-12-26,Math Quiz,Hard,47.0,18
+1109,S98723,2026-01-24,Science Lab,Medium,87.0,37
+1110,S98723,2026-01-14,Science Lab,Medium,88.0,51
+1111,S98723,2026-01-11,History Essay,Hard,83.0,27
+1112,S98723,2025-12-29,English Reading,Medium,99.0,46
+1113,S98723,2025-12-31,Math Quiz,Hard,57.0,29
+1114,S30274,2026-01-10,Science Lab,Easy,83.0,39
+1115,S30274,2026-01-19,Science Lab,Medium,92.0,59
+1116,S30274,2026-01-21,History Essay,Medium,41.0,37
+1117,S30274,2025-12-27,Math Quiz,Medium,44.0,56
+1118,S30274,2026-01-12,Math Quiz,Medium,92.0,20
+1119,S30274,2026-01-10,Science Lab,Medium,49.0,38
+1120,S30274,2026-01-05,History Essay,Easy,94.0,48
+1121,S82479,2025-12-31,Physics Test,Easy,88.0,59
+1122,S82479,2025-12-25,History Essay,Hard,51.0,42
+1123,S82479,2026-01-14,History Essay,Medium,67.0,27
+1124,S82479,2026-01-04,Physics Test,Easy,81.0,15
+1125,S82479,2026-01-21,Science Lab,Medium,50.0,57
+1126,S82479,2025-12-31,Physics Test,Easy,74.0,54
+1127,S82479,2026-01-17,Science Lab,Medium,98.0,22
+1128,S82479,2025-12-28,Science Lab,Medium,98.0,19
+1129,S82479,2026-01-08,History Essay,Medium,86.0,20
+1130,S82479,2025-12-31,English Reading,Medium,95.0,21
+1131,S11056,2026-01-18,Physics Test,Medium,42.0,54
+1132,S11056,2026-01-11,Science Lab,Medium,77.0,26
+1133,S11056,2025-12-29,History Essay,Easy,99.0,20
+1134,S11056,2026-01-17,Math Quiz,Hard,80.0,37
+1135,S11056,2025-12-30,History Essay,Easy,84.0,44
+1136,S11056,2026-01-09,Science Lab,Medium,75.0,43
+1137,S88624,2026-01-06,English Reading,Hard,97.0,52
+1138,S88624,2026-01-11,Math Quiz,Medium,78.0,41
+1139,S88624,2026-01-10,English Reading,Easy,52.0,60
+1140,S88624,2026-01-06,History Essay,Easy,50.0,22
+1141,S88624,2025-12-28,Math Quiz,Easy,87.0,45
+1142,S88624,2025-12-30,History Essay,Medium,42.0,59
+1143,S88624,2026-01-13,History Essay,Medium,79.0,51
+1144,S88624,2025-12-31,History Essay,Medium,73.0,59
+1145,S88624,2025-12-25,Physics Test,Easy,41.0,39
+1146,S88624,2026-01-16,History Essay,Hard,45.0,59
+1147,S86072,2026-01-15,Math Quiz,Easy,44.0,34
+1148,S86072,2026-01-01,English Reading,Easy,60.0,21
+1149,S86072,2026-01-07,History Essay,Easy,41.0,42
+1150,S86072,2026-01-20,Math Quiz,Easy,83.0,53
+1151,S86072,2026-01-16,Math Quiz,Medium,79.0,18
+1152,S86072,2026-01-02,Science Lab,Hard,81.0,29
+1153,S86072,2026-01-02,Math Quiz,Medium,41.0,58
+1154,S86072,2026-01-17,Math Quiz,Easy,76.0,44
+1155,S86072,2026-01-09,Physics Test,Hard,55.0,16
+1156,S86072,2026-01-03,Physics Test,Easy,78.0,40
+1157,S37133,2025-12-28,Math Quiz,Hard,41.0,46
+1158,S37133,2026-01-07,Physics Test,Easy,78.0,47
+1159,S37133,2026-01-18,History Essay,Hard,75.0,46
+1160,S37133,2026-01-11,Physics Test,Hard,81.0,29
+1161,S37133,2025-12-30,English Reading,Hard,52.0,51
+1162,S37133,2026-01-16,Physics Test,Hard,60.0,57
+1163,S11319,2026-01-03,Physics Test,Medium,88.0,37
+1164,S11319,2026-01-08,History Essay,Medium,59.0,30
+1165,S11319,2025-12-26,Math Quiz,Easy,83.0,29
+1166,S11319,2026-01-21,Physics Test,Hard,98.0,58
+1167,S11319,2025-12-28,Science Lab,Medium,44.0,42
+1168,S11319,2026-01-23,History Essay,Hard,69.0,42
+1169,S11319,2025-12-30,History Essay,Medium,64.0,29
+1170,S11319,2026-01-24,English Reading,Hard,80.0,27
+1171,S11319,2026-01-21,English Reading,Hard,94.0,44
+1172,S11319,2026-01-15,Science Lab,Medium,69.0,48
+1173,S48296,2026-01-24,History Essay,Easy,60.0,39
+1174,S48296,2026-01-05,English Reading,Easy,81.0,16
+1175,S48296,2026-01-14,English Reading,Medium,70.0,35
+1176,S48296,2026-01-14,Physics Test,Easy,86.0,54
+1177,S48296,2025-12-26,History Essay,Easy,46.0,29
+1178,S32193,2026-01-07,History Essay,Hard,100.0,22
+1179,S32193,2025-12-28,Math Quiz,Hard,80.0,35
+1180,S32193,2026-01-12,Physics Test,Medium,91.0,36
+1181,S32193,2026-01-14,Science Lab,Medium,85.0,21
+1182,S32193,2026-01-08,Math Quiz,Easy,86.0,59
+1183,S35397,2025-12-25,History Essay,Medium,81.0,55
+1184,S35397,2026-01-17,Math Quiz,Medium,64.0,31
+1185,S35397,2026-01-14,History Essay,Hard,52.0,21
+1186,S35397,2026-01-13,History Essay,Hard,96.0,20
+1187,S35397,2025-12-25,Science Lab,Easy,51.0,56
+1188,S35397,2026-01-12,Science Lab,Hard,89.0,23
+1189,S35397,2026-01-19,Physics Test,Medium,89.0,58
+1190,S35397,2026-01-18,English Reading,Easy,100.0,60
+1191,S35896,2026-01-10,Physics Test,Easy,59.0,45
+1192,S35896,2026-01-10,History Essay,Medium,51.0,26
+1193,S35896,2026-01-17,History Essay,Easy,88.0,32
+1194,S35896,2026-01-23,History Essay,Medium,72.0,47
+1195,S35896,2025-12-27,Physics Test,Medium,73.0,37
+1196,S35896,2026-01-02,English Reading,Hard,96.0,40
+1197,S35896,2026-01-10,History Essay,Hard,85.0,39
+1198,S35896,2025-12-26,Math Quiz,Medium,74.0,45
+1199,S35896,2026-01-17,Math Quiz,Medium,51.0,41
+1200,S72984,2026-01-14,History Essay,Easy,75.0,41
+1201,S72984,2026-01-04,History Essay,Easy,48.0,56
+1202,S72984,2026-01-24,Science Lab,Medium,89.0,21
+1203,S72984,2026-01-03,Science Lab,Hard,100.0,24
+1204,S72984,2026-01-23,English Reading,Hard,57.0,28
+1205,S72984,2026-01-07,English Reading,Easy,66.0,47
+1206,S72984,2026-01-18,Math Quiz,Hard,77.0,60
+1207,S72984,2025-12-25,Math Quiz,Hard,51.0,46
+1208,S62695,2026-01-11,Physics Test,Medium,41.0,27
+1209,S62695,2026-01-09,Science Lab,Medium,68.0,43
+1210,S62695,2026-01-11,History Essay,Medium,55.0,41
+1211,S62695,2026-01-11,History Essay,Medium,92.0,43
+1212,S62695,2026-01-22,Physics Test,Medium,74.0,50
+1213,S62695,2025-12-27,English Reading,Hard,41.0,18
+1214,S62695,2025-12-27,English Reading,Medium,65.0,58
+1215,S62695,2026-01-07,Math Quiz,Easy,50.0,60
+1216,S62695,2026-01-15,History Essay,Medium,62.0,58
+1217,S18858,2025-12-30,History Essay,Medium,82.0,17
+1218,S18858,2026-01-22,Science Lab,Medium,88.0,38
+1219,S18858,2026-01-16,Math Quiz,Easy,89.0,17
+1220,S18858,2026-01-15,Science Lab,Hard,66.0,46
+1221,S18858,2026-01-16,Math Quiz,Medium,83.0,35
+1222,S18858,2026-01-03,Science Lab,Medium,88.0,34
+1223,S18858,2026-01-11,English Reading,Hard,92.0,28
+1224,S48637,2026-01-13,History Essay,Hard,48.0,55
+1225,S48637,2026-01-23,Science Lab,Hard,52.0,45
+1226,S48637,2025-12-26,Math Quiz,Easy,77.0,26
+1227,S48637,2026-01-10,Math Quiz,Easy,78.0,33
+1228,S48637,2026-01-19,Science Lab,Medium,40.0,48
+1229,S53493,2025-12-28,Math Quiz,Hard,42.0,30
+1230,S53493,2026-01-14,English Reading,Medium,77.0,18
+1231,S53493,2026-01-05,Physics Test,Easy,56.0,34
+1232,S53493,2026-01-03,Science Lab,Hard,100.0,54
+1233,S53493,2026-01-12,Science Lab,Easy,51.0,39
+1234,S53493,2026-01-12,History Essay,Easy,46.0,47
+1235,S53493,2026-01-10,English Reading,Hard,91.0,60
+1236,S53493,2026-01-09,Science Lab,Easy,99.0,58
+1237,S53493,2026-01-14,Science Lab,Medium,78.0,56
+1238,S63147,2026-01-03,Math Quiz,Easy,76.0,24
+1239,S63147,2026-01-11,English Reading,Medium,46.0,50
+1240,S63147,2026-01-18,History Essay,Hard,71.0,16
+1241,S63147,2025-12-30,English Reading,Hard,41.0,57
+1242,S63147,2026-01-17,History Essay,Easy,44.0,22
+1243,S45579,2026-01-12,Science Lab,Medium,78.0,21
+1244,S45579,2026-01-10,English Reading,Easy,98.0,25
+1245,S45579,2026-01-13,History Essay,Easy,85.0,24
+1246,S45579,2026-01-07,Science Lab,Easy,85.0,57
+1247,S45579,2026-01-08,Physics Test,Easy,85.0,34
+1248,S45579,2025-12-29,English Reading,Easy,53.0,37
+1249,S45579,2026-01-08,Math Quiz,Hard,98.0,16
+1250,S45579,2026-01-22,English Reading,Hard,40.0,44
+1251,S45579,2026-01-07,Math Quiz,Hard,51.0,48
+1252,S45579,2026-01-15,History Essay,Medium,85.0,34
+1253,S73033,2026-01-03,Science Lab,Medium,89.0,20
+1254,S73033,2026-01-03,Physics Test,Hard,84.0,18
+1255,S73033,2026-01-01,History Essay,Hard,74.0,20
+1256,S73033,2026-01-17,History Essay,Hard,79.0,43
+1257,S73033,2026-01-21,Science Lab,Hard,64.0,29
+1258,S73033,2026-01-08,History Essay,Medium,58.0,47
+1259,S73033,2026-01-05,English Reading,Easy,63.0,36
+1260,S73033,2026-01-18,Physics Test,Hard,89.0,55
+1261,S60622,2025-12-29,History Essay,Hard,41.0,53
+1262,S60622,2026-01-04,Math Quiz,Hard,61.0,45
+1263,S60622,2026-01-05,Science Lab,Easy,92.0,59
+1264,S60622,2026-01-24,English Reading,Easy,45.0,22
+1265,S60622,2025-12-26,Math Quiz,Medium,93.0,47
+1266,S60622,2026-01-19,Physics Test,Easy,54.0,15
+1267,S60622,2026-01-20,Science Lab,Easy,79.0,58
+1268,S60622,2026-01-16,Science Lab,Medium,55.0,33
+1269,S60622,2026-01-03,Physics Test,Easy,61.0,37
+1270,S10517,2026-01-12,English Reading,Medium,49.0,32
+1271,S10517,2026-01-17,Math Quiz,Medium,68.0,42
+1272,S10517,2026-01-13,Math Quiz,Medium,55.0,53
+1273,S10517,2025-12-30,Science Lab,Medium,92.0,21
+1274,S10517,2026-01-13,Math Quiz,Hard,47.0,25
+1275,S10517,2026-01-07,History Essay,Hard,83.0,31
+1276,S10517,2026-01-06,Physics Test,Hard,62.0,40
+1277,S10517,2025-12-27,History Essay,Easy,100.0,24
+1278,S32657,2025-12-25,Math Quiz,Hard,62.0,16
+1279,S32657,2026-01-14,Physics Test,Medium,97.0,30
+1280,S32657,2026-01-04,Science Lab,Easy,46.0,19
+1281,S32657,2026-01-03,Science Lab,Easy,79.0,35
+1282,S32657,2026-01-07,History Essay,Medium,64.0,47
+1283,S32657,2026-01-24,Physics Test,Easy,67.0,18
+1284,S32657,2026-01-24,History Essay,Easy,83.0,27
+1285,S32657,2026-01-01,English Reading,Hard,47.0,27
+1286,S80763,2026-01-17,Math Quiz,Medium,48.0,31
+1287,S80763,2025-12-27,History Essay,Easy,93.0,18
+1288,S80763,2026-01-07,English Reading,Medium,41.0,32
+1289,S80763,2026-01-15,English Reading,Easy,71.0,27
+1290,S80763,2026-01-14,Physics Test,Easy,40.0,25
+1291,S80763,2026-01-02,History Essay,Hard,91.0,25
+1292,S80763,2026-01-06,History Essay,Hard,100.0,39
+1293,S71958,2025-12-26,Math Quiz,Easy,62.0,21
+1294,S71958,2026-01-07,History Essay,Medium,64.0,54
+1295,S71958,2026-01-15,Physics Test,Easy,60.0,33
+1296,S71958,2026-01-13,History Essay,Easy,45.0,29
+1297,S71958,2026-01-15,English Reading,Easy,46.0,46
+1298,S57169,2026-01-24,Physics Test,Easy,98.0,55
+1299,S57169,2026-01-12,Math Quiz,Easy,62.0,18
+1300,S57169,2026-01-21,English Reading,Easy,87.0,49
+1301,S57169,2026-01-18,History Essay,Hard,97.0,43
+1302,S57169,2026-01-09,Math Quiz,Hard,68.0,39
+1303,S57169,2026-01-08,Math Quiz,Hard,90.0,41
+1304,S57169,2025-12-30,Science Lab,Hard,99.0,37
+1305,S57169,2026-01-03,Physics Test,Medium,77.0,47
+1306,S57169,2026-01-03,Math Quiz,Easy,44.0,42
+1307,S57169,2026-01-08,History Essay,Medium,77.0,34
+1308,S51560,2026-01-22,Science Lab,Hard,54.0,25
+1309,S51560,2025-12-26,History Essay,Easy,87.0,22
+1310,S51560,2026-01-06,History Essay,Medium,42.0,38
+1311,S51560,2025-12-27,History Essay,Easy,44.0,40
+1312,S51560,2025-12-28,History Essay,Easy,78.0,53
+1313,S51560,2025-12-31,Science Lab,Medium,88.0,29
+1314,S51560,2026-01-02,English Reading,Medium,49.0,18
+1315,S51560,2026-01-13,English Reading,Easy,46.0,21
+1316,S51560,2026-01-19,Physics Test,Easy,93.0,15
+1317,S64074,2026-01-07,English Reading,Hard,49.0,46
+1318,S64074,2026-01-17,History Essay,Easy,43.0,19
+1319,S64074,2025-12-27,Math Quiz,Hard,79.0,38
+1320,S64074,2025-12-31,Science Lab,Hard,47.0,59
+1321,S64074,2026-01-09,History Essay,Easy,70.0,18
+1322,S64074,2026-01-17,Science Lab,Medium,72.0,29
+1323,S64074,2026-01-10,History Essay,Easy,69.0,43
+1324,S64074,2026-01-10,Physics Test,Easy,85.0,30
+1325,S56455,2026-01-09,Math Quiz,Hard,41.0,25
+1326,S56455,2026-01-19,Physics Test,Hard,60.0,18
+1327,S56455,2026-01-05,English Reading,Medium,67.0,16
+1328,S56455,2025-12-26,Math Quiz,Medium,92.0,43
+1329,S56455,2026-01-18,English Reading,Hard,88.0,54
+1330,S56455,2026-01-16,History Essay,Medium,99.0,29

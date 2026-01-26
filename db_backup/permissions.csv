@@ -1,0 +1,38 @@
+id,code,description,group_name
+1,user.view,View Users,User Management
+2,user.create,Create Users,User Management
+3,user.edit,Edit Users,User Management
+4,user.delete,Delete Users,User Management
+5,role.manage,Manage Roles & Permissions,System
+6,school.manage,Manage Institutions,System
+7,class.view,View Classes,Academics
+8,class.create,Create/Schedule Classes,Academics
+9,class.edit,Edit Classes,Academics
+10,assignment.view,View Assignments,Academics
+11,assignment.create,Create Assignments,Academics
+12,assignment.grade,Grade Assignments,Academics
+13,reports.view,View Reports/Analytics,Analytics
+14,finance.view,View Finance,Administration
+47,role.view,View Roles,Role Management
+48,role.create,Create Roles,Role Management
+49,role.edit,Edit Roles,Role Management
+50,role.delete,Delete Roles,Role Management
+85,permission.view,View Permissions,Permission Management
+86,permission.edit,Edit Permissions,Permission Management
+211,communication.view,View Communication,Communication
+212,communication.announce,Post Announcements,Communication
+213,communication.events,Manage Calendar Events,Communication
+596,user_management,Manage Users (Create/Edit/Delete),User Management
+597,role_management,Manage Roles & Permissions,Role Management
+598,permission_management,View Platform Permissions,Permission Management
+791,compliance.view,View Compliance & Security,Compliance
+792,compliance.manage,Manage Compliance Settings,Compliance
+810,finance.manage,Manage Finance Settings,Finance
+847,staff.view,View Staff & Faculty,HR
+848,staff.manage,Manage Staff & Faculty,HR
+909,student.info.view,View Student Information,Student Info
+910,student.info.manage,Manage Student Information,Student Info
+1435,finance.invoices,Manage Invoices,Finance
+1436,finance.payroll,Manage Payroll,Finance
+1439,staff.assets,Manage Assets & Lending,HR
+1442,student.progress.view,View Student Progress,Student Info

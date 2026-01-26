@@ -1,0 +1,9 @@
+id,name,description,school_id,is_system,status
+122,Root_Super_Admin,Root Access - Full System Control,,True,Active
+123,Tenant_Admin,School Administrator (Principal),,True,Active
+124,Academic_Admin,Academic Coordinator,,True,Active
+125,Teacher,Faculty Member,,True,Active
+126,Student,Learner,,True,Active
+127,Parent_Guardian,Parent/Guardian,,True,Active
+128,Finance_Officer,Finance Manager,,True,Active
+129,HR_Admin,Human Resources Admin,,True,Active
