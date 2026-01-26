@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.env
+*.db
+*.sqlite3
+.DS_Store
+venv/
+env/
+static/resources/*
+!static/resources/.keep

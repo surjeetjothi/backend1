@@ -1,0 +1,154 @@
+<!-- Students Landing View -->
+<div id="students-landing-view" class="view"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; overflow-y: auto; background-color: #f0f9ff;">
+
+    <!-- Navbar for Students View -->
+    <nav class="navbar navbar-expand-lg position-fixed top-0 w-100 py-3 glass-navbar"
+        style="background: white; z-index: 100; border-bottom: 1px solid rgba(0,0,0,0.05);">
+        <div class="container d-flex align-items-center justify-content-between">
+            <a class="navbar-brand d-flex align-items-center gap-2 text-primary-custom" href="#"
+                onclick="switchView('landing-view')">
+                <img src="./static/logo.jpg" alt="Logo" style="width: 40px; height: 40px; border-radius: 50%;">
+                <span class="fw-bold fs-4" style="font-family: 'Poppins', sans-serif;">Class
+                    Bridge</span>
+            </a>
+
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-primary rounded-pill px-4 fw-bold" onclick="switchView('landing-view')">
+                    Back
+                </button>
+                <button class="btn btn-primary rounded-pill px-4 fw-bold"
+                    onclick="selectLoginRole('Student'); showLogin()" style="background-color: #0ea5e9; border: none;">
+                    Student Login
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" style="padding-top: 100px;">
+        <div class="container-fluid p-0">
+            <!-- Hero Section (Blue Theme) -->
+            <section id="students-hero"
+                class="py-5 position-relative text-white overflow-hidden rounded-5 shadow-lg mb-5"
+                style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); min-height: 75vh; display: flex; align-items: center;">
+
+                <div class="container position-relative z-2">
+                    <div class="row align-items-center">
+                        <div class="col-lg-6 text-start">
+                            <span
+                                class="badge bg-white bg-opacity-20 rounded-pill px-3 py-2 mb-4 border border-white border-opacity-25">
+                                For Students
+                            </span>
+                            <h1 class="display-3 fw-bold mb-4" style="line-height: 1.1;">
+                                Learning Just Got <br>
+                                <span class="text-warning">Superpowered.</span>
+                            </h1>
+                            <p class="lead opacity-90 mb-5">
+                                Stuck on homework? Need a practice quiz? Your AI tutor is here 24/7.
+                                Earn badges, track your growth, and crush your exams.
+                            </p>
+
+                            <div class="d-flex gap-3">
+                                <button
+                                    class="btn btn-light text-primary fw-bold btn-lg rounded-pill px-5 py-3 shadow-lg transform-hover"
+                                    onclick="selectLoginRole('Student'); showLogin()">
+                                    Start Learning
+                                </button>
+                                <button
+                                    class="btn btn-outline-light btn-lg rounded-pill px-5 py-3 fw-bold transform-hover"
+                                    onclick="document.getElementById('student-features').scrollIntoView({behavior: 'smooth'})">
+                                    Explore
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 d-none d-lg-block position-relative">
+                            <!-- Mockup of Student UI -->
+                            <div class="bg-white p-3 rounded-4 shadow-lg text-dark transform-hover"
+                                style="transform: rotate(-2deg); max-width: 450px; margin-left: auto;">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="bg-primary bg-opacity-10 p-2 rounded-circle me-3">
+                                        <span class="material-icons text-primary">psychology_alt</span>
+                                    </div>
+                                    <div>
+                                        <h6 class="fw-bold mb-0">AI Tutor</h6>
+                                        <small class="text-muted">Just now</small>
+                                    </div>
+                                </div>
+                                <div class="bg-light p-3 rounded-3 mb-3 small">
+                                    "Great job on that algebra problem! You've mastered quadratic equations. Ready for a
+                                    challenge?"
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <div
+                                        class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 p-2 px-3 rounded-pill">
+                                        +50 XP
+                                    </div>
+                                    <div
+                                        class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-25 p-2 px-3 rounded-pill">
+                                        🔥 Streak: 5 Days
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white p-3 rounded-4 shadow-lg text-dark transform-hover position-absolute top-100 start-0 translate-middle-y"
+                                style="transform: rotate(3deg); bottom: -40px; left: -50px; width: 300px; z-index: -1;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="fw-bold small">Next Class: Physics</span>
+                                    <span class="badge bg-danger rounded-pill">Live</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-danger w-75"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Features Grid -->
+            <section class="py-5 px-3" id="student-features">
+                <div class="container">
+                    <div class="text-center mb-5">
+                        <h2 class="display-6 fw-bold">Everything you need to ace it.</h2>
+                    </div>
+
+                    <div class="row g-4">
+                        <!-- Feature 1 -->
+                        <div class="col-md-4">
+                            <div class="p-4 bg-white rounded-4 shadow-sm border h-100 transform-hover">
+                                <div class="mb-3 text-info">
+                                    <span class="material-icons fs-1">chat</span>
+                                </div>
+                                <h4 class="fw-bold">24/7 AI Help</h4>
+                                <p class="text-muted">Never get stuck again. Ask questions and get instant, step-by-step
+                                    explanations.</p>
+                            </div>
+                        </div>
+                        <!-- Feature 2 -->
+                        <div class="col-md-4">
+                            <div class="p-4 bg-white rounded-4 shadow-sm border h-100 transform-hover">
+                                <div class="mb-3 text-warning">
+                                    <span class="material-icons fs-1">emoji_events</span>
+                                </div>
+                                <h4 class="fw-bold">Gamified Growth</h4>
+                                <p class="text-muted">Earn XP, unlock badges, and climb the leaderboard as you complete
+                                    assignments.</p>
+                            </div>
+                        </div>
+                        <!-- Feature 3 -->
+                        <div class="col-md-4">
+                            <div class="p-4 bg-white rounded-4 shadow-sm border h-100 transform-hover">
+                                <div class="mb-3 text-purple" style="color: #8b5cf6;">
+                                    <span class="material-icons fs-1">auto_graph</span>
+                                </div>
+                                <h4 class="fw-bold">Smart Insights</h4>
+                                <p class="text-muted">Understand your strengths and weaknesses with personalized
+                                    performance analytics.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>

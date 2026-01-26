@@ -1,0 +1,468 @@
+2026-01-22 19:42:03,005 [INFO] AI Chat System Initialized (Groq Powered).
+2026-01-22 19:42:03,028 [INFO] Grade Helper AI Initialized.
+INFO:     Will watch for changes in these directories: ['/Users/surjeet/Documents/Classbridge02/class']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [8749] using WatchFiles
+2026-01-22 19:42:03,802 [INFO] AI Chat System Initialized (Groq Powered).
+2026-01-22 19:42:03,824 [INFO] Grade Helper AI Initialized.
+2026-01-22 19:42:04,081 [INFO] AI Chat System Initialized (Groq Powered).
+2026-01-22 19:42:04,103 [INFO] Grade Helper AI Initialized.
+INFO:     Started server process [8802]
+INFO:     Waiting for application startup.
+2026-01-22 19:42:04,173 [INFO] Initializing Database...
+2026-01-22 19:42:04,317 [INFO] Database Initialized.
+2026-01-22 19:42:04,317 [INFO] Training Recommendation Model (Lazy loaded on demand)...
+2026-01-22 19:42:04,317 [INFO] Model training deferred.
+INFO:     Application startup complete.
+INFO:     127.0.0.1:51719 - "GET /api/resources HTTP/1.1" 200 OK
+2026-01-22 19:43:35,726 [INFO] 1 change detected
+2026-01-22 19:44:08,464 [INFO] Login attempt for user: admin
+2026-01-22 19:44:08,531 [INFO] Password correct for admin, triggering 2FA.
+INFO:     127.0.0.1:51746 - "POST /api/auth/login HTTP/1.1" 200 OK
+2026-01-22 19:44:13,144 [INFO] 2FA Successful for user: admin
+2026-01-22 19:44:13,160 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(191) already exists.
+
+INFO:     127.0.0.1:51746 - "POST /api/auth/verify-2fa HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51746 - "GET /api/admin/schools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51746 - "GET /api/students/all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51746 - "GET /api/teacher/overview HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51746 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51760 - "GET /api/resources?category=Schedule&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51760 - "GET /api/resources?category=Policy&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51760 - "GET /api/resources?category=Form&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51760 - "GET /api/resources?category=Other&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51760 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+2026-01-22 19:44:41,640 [INFO] Login attempt for user: teacher
+2026-01-22 19:44:41,659 [INFO] Password correct for teacher, triggering 2FA.
+INFO:     127.0.0.1:51771 - "POST /api/auth/login HTTP/1.1" 200 OK
+2026-01-22 19:44:47,323 [INFO] 2FA Successful for user: teacher
+2026-01-22 19:44:47,342 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(192) already exists.
+
+INFO:     127.0.0.1:51773 - "POST /api/auth/verify-2fa HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51773 - "GET /api/students/all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51773 - "GET /api/teacher/overview HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51778 - "GET /api/classes/upcoming HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51773 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51778 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+2026-01-22 19:48:02,032 [INFO] 1 change detected
+2026-01-22 19:48:51,835 [INFO] 1 change detected
+INFO:     127.0.0.1:51827 - "OPTIONS /api/auth/login HTTP/1.1" 200 OK
+2026-01-22 19:48:59,808 [INFO] Login attempt for user: admin
+2026-01-22 19:48:59,855 [INFO] Password correct for admin, triggering 2FA.
+INFO:     127.0.0.1:51827 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51829 - "OPTIONS /api/auth/verify-2fa HTTP/1.1" 200 OK
+2026-01-22 19:49:04,962 [INFO] 2FA Successful for user: admin
+2026-01-22 19:49:04,979 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(193) already exists.
+
+INFO:     127.0.0.1:51829 - "POST /api/auth/verify-2fa HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51829 - "OPTIONS /api/admin/schools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51829 - "GET /api/admin/schools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51829 - "OPTIONS /api/students/all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51829 - "GET /api/students/all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51829 - "OPTIONS /api/teacher/overview HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51829 - "GET /api/teacher/overview HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51829 - "OPTIONS /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51829 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51829 - "GET /api/resources?category=Schedule&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51848 - "OPTIONS /api/resources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51848 - "POST /api/resources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51848 - "OPTIONS /api/resources?category=Exam%20Schedules&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51848 - "GET /api/resources?category=Exam%20Schedules&school_id=1 HTTP/1.1" 200 OK
+2026-01-22 19:49:53,169 [INFO] 1 change detected
+INFO:     127.0.0.1:51848 - "OPTIONS /api/resources?category=Schedule&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51848 - "GET /api/resources?category=Schedule&school_id=1 HTTP/1.1" 200 OK
+2026-01-22 19:50:07,443 [INFO] Login attempt for user: teacher
+2026-01-22 19:50:07,462 [INFO] Password correct for teacher, triggering 2FA.
+INFO:     127.0.0.1:51854 - "POST /api/auth/login HTTP/1.1" 200 OK
+2026-01-22 19:50:13,374 [INFO] 2FA Successful for user: teacher
+2026-01-22 19:50:13,391 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(194) already exists.
+
+INFO:     127.0.0.1:51856 - "POST /api/auth/verify-2fa HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51856 - "GET /api/students/all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51856 - "GET /api/teacher/overview HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51861 - "OPTIONS /api/classes/upcoming HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51856 - "GET /api/classes/upcoming HTTP/1.1" 200 OK
+INFO:     127.0.0.1:51861 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+2026-01-22 19:53:12,077 [INFO] 1 change detected
+2026-01-22 20:33:11,878 [INFO] 1 change detected
+INFO:     127.0.0.1:52116 - "OPTIONS /api/auth/login HTTP/1.1" 200 OK
+2026-01-22 20:33:39,402 [INFO] Login attempt for user: admin
+2026-01-22 20:33:39,552 [INFO] Password correct for admin, triggering 2FA.
+INFO:     127.0.0.1:52116 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52120 - "OPTIONS /api/auth/verify-2fa HTTP/1.1" 200 OK
+2026-01-22 20:33:46,898 [INFO] 2FA Successful for user: admin
+2026-01-22 20:33:46,917 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(195) already exists.
+
+INFO:     127.0.0.1:52120 - "POST /api/auth/verify-2fa HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52120 - "OPTIONS /api/admin/schools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52120 - "GET /api/admin/schools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52120 - "OPTIONS /api/students/all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52120 - "GET /api/students/all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52120 - "OPTIONS /api/teacher/overview HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52120 - "GET /api/teacher/overview HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52120 - "OPTIONS /api/admin/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52120 - "GET /api/admin/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52120 - "OPTIONS /api/admin/users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52120 - "GET /api/admin/users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52120 - "GET /api/admin/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52120 - "OPTIONS /api/admin/permissions/list HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52120 - "GET /api/admin/permissions/list HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52120 - "OPTIONS /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52120 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52120 - "GET /static/resources/d5f5aaa9-4156-4ff7-b7fb-1a2616a74d87.pdf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52137 - "GET /static/resources/d5f5aaa9-4156-4ff7-b7fb-1a2616a74d87.pdf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52138 - "GET /apple-touch-icon-precomposed.png HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:52137 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:52138 - "GET /apple-touch-icon.png HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:52138 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:52141 - "OPTIONS /api/resources/3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52141 - "DELETE /api/resources/3 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52141 - "OPTIONS /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52141 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52141 - "OPTIONS /api/resources/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52141 - "DELETE /api/resources/1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52141 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+2026-01-22 20:35:54,262 [INFO] 1 change detected
+INFO:     127.0.0.1:52173 - "OPTIONS /api/auth/login HTTP/1.1" 200 OK
+2026-01-22 20:36:33,569 [INFO] Login attempt for user: admin
+2026-01-22 20:36:33,588 [INFO] Password correct for admin, triggering 2FA.
+INFO:     127.0.0.1:52173 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52177 - "OPTIONS /api/auth/verify-2fa HTTP/1.1" 200 OK
+2026-01-22 20:36:40,739 [INFO] 2FA Successful for user: admin
+2026-01-22 20:36:40,754 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(196) already exists.
+
+INFO:     127.0.0.1:52177 - "POST /api/auth/verify-2fa HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52177 - "OPTIONS /api/admin/schools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52177 - "GET /api/admin/schools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52177 - "OPTIONS /api/students/all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52177 - "GET /api/students/all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52177 - "OPTIONS /api/teacher/overview HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52177 - "GET /api/teacher/overview HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52177 - "OPTIONS /api/admin/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52177 - "GET /api/admin/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52177 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52177 - "GET /static/resources/f6ec6541-24ec-4c00-b2f9-86b95b144aeb.pdf HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:52188 - "GET /static/resources/f6ec6541-24ec-4c00-b2f9-86b95b144aeb.pdf HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:52211 - "GET /api/resources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52223 - "DELETE /api/resources/2 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52231 - "GET /api/resources HTTP/1.1" 200 OK
+2026-01-22 20:40:13,653 [INFO] 1 change detected
+2026-01-22 20:40:32,426 [INFO] 1 change detected
+INFO:     127.0.0.1:52260 - "GET /static/resources/test.txt HTTP/1.1" 200 OK
+2026-01-22 20:42:07,237 [INFO] 1 change detected
+2026-01-22 20:42:43,825 [INFO] 1 change detected
+2026-01-22 20:42:57,009 [INFO] Login attempt for user: admin
+2026-01-22 20:42:57,031 [INFO] Password correct for admin, triggering 2FA.
+INFO:     127.0.0.1:52294 - "POST /api/auth/login HTTP/1.1" 200 OK
+2026-01-22 20:43:01,608 [INFO] 2FA Successful for user: admin
+2026-01-22 20:43:01,625 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(197) already exists.
+
+INFO:     127.0.0.1:52294 - "POST /api/auth/verify-2fa HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52294 - "GET /api/admin/schools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52294 - "GET /api/students/all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52294 - "GET /api/teacher/overview HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52294 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52294 - "OPTIONS /api/reports/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52294 - "GET /api/reports/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52294 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52294 - "OPTIONS /api/resources?category=Policy&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52294 - "GET /api/resources?category=Policy&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52294 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52294 - "OPTIONS /api/resources?category=Schedule&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52294 - "GET /api/resources?category=Schedule&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52294 - "OPTIONS /api/resources?category=Other&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52294 - "GET /api/resources?category=Other&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52294 - "OPTIONS /api/resources?category=Form&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52294 - "GET /api/resources?category=Form&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52294 - "GET /api/resources?category=Schedule&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52320 - "OPTIONS /api/resources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52320 - "POST /api/resources HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52320 - "OPTIONS /api/resources?category=Exam%20Schedules&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52320 - "GET /api/resources?category=Exam%20Schedules&school_id=1 HTTP/1.1" 200 OK
+2026-01-22 20:44:04,370 [INFO] 1 change detected
+INFO:     127.0.0.1:52320 - "GET /api/resources?category=Form&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52320 - "GET /api/resources?category=Other&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52320 - "GET /api/resources?category=Schedule&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52320 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52320 - "HEAD /static/resources/c9dfe300-2e68-42ad-a327-2f5f531ae3f0.pdf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52320 - "GET /static/resources/c9dfe300-2e68-42ad-a327-2f5f531ae3f0.pdf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52320 - "HEAD /static/resources/c9dfe300-2e68-42ad-a327-2f5f531ae3f0.pdf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52320 - "GET /static/resources/c9dfe300-2e68-42ad-a327-2f5f531ae3f0.pdf HTTP/1.1" 200 OK
+2026-01-22 20:44:35,580 [INFO] Login attempt for user: teacher
+2026-01-22 20:44:35,598 [INFO] Password correct for teacher, triggering 2FA.
+INFO:     127.0.0.1:52331 - "POST /api/auth/login HTTP/1.1" 200 OK
+2026-01-22 20:44:40,405 [INFO] 2FA Successful for user: teacher
+2026-01-22 20:44:40,421 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(198) already exists.
+
+INFO:     127.0.0.1:52331 - "POST /api/auth/verify-2fa HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52331 - "GET /api/students/all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52331 - "GET /api/teacher/overview HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52337 - "OPTIONS /api/classes/upcoming HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52331 - "GET /api/classes/upcoming HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52337 - "OPTIONS /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52331 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52337 - "GET /api/resources?category=Policy&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52331 - "GET /api/resources?category=Schedule&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52337 - "GET /api/resources?category=Form&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52331 - "GET /api/resources?category=Other&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52337 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52348 - "HEAD /static/resources/c9dfe300-2e68-42ad-a327-2f5f531ae3f0.pdf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52348 - "GET /static/resources/c9dfe300-2e68-42ad-a327-2f5f531ae3f0.pdf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52351 - "GET /api/teacher/overview HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52359 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52359 - "GET /api/resources?category=Policy&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52359 - "GET /api/resources?category=Schedule&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52359 - "GET /api/resources?category=Form&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52359 - "GET /api/resources?category=Other&school_id=1 HTTP/1.1" 200 OK
+2026-01-22 20:48:03,750 [INFO] 1 change detected
+INFO:     127.0.0.1:52398 - "OPTIONS /api/auth/login HTTP/1.1" 200 OK
+2026-01-22 20:48:46,057 [INFO] Login attempt for user: admin
+2026-01-22 20:48:46,122 [INFO] Password correct for admin, triggering 2FA.
+INFO:     127.0.0.1:52398 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52398 - "OPTIONS /api/auth/verify-2fa HTTP/1.1" 200 OK
+2026-01-22 20:48:49,806 [INFO] 2FA Successful for user: admin
+2026-01-22 20:48:49,823 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(199) already exists.
+
+INFO:     127.0.0.1:52398 - "POST /api/auth/verify-2fa HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52398 - "OPTIONS /api/admin/schools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52398 - "GET /api/admin/schools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52398 - "OPTIONS /api/students/all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52398 - "GET /api/students/all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52398 - "OPTIONS /api/teacher/overview HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52398 - "GET /api/teacher/overview HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52398 - "OPTIONS /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52398 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52398 - "GET /api/resources?category=Policy&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52398 - "GET /api/resources?category=Schedule&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52398 - "GET /api/resources?category=Form&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52398 - "GET /api/resources?category=Other&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52398 - "GET /api/resources?category=Form&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52398 - "GET /api/resources?category=Schedule&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52398 - "GET /api/resources?category=Policy&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52398 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52398 - "OPTIONS /api/auth/logout HTTP/1.1" 200 OK
+2026-01-22 20:49:03,948 [INFO] Logout for user: admin
+2026-01-22 20:49:03,965 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(200) already exists.
+
+INFO:     127.0.0.1:52398 - "POST /api/auth/logout HTTP/1.1" 200 OK
+2026-01-22 20:49:30,456 [INFO] Login attempt for user: principal_noble
+2026-01-22 20:49:30,471 [WARNING] Login failed for user: principal_noble - User not found
+2026-01-22 20:49:30,484 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(201) already exists.
+
+INFO:     127.0.0.1:52424 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+2026-01-22 20:49:31,264 [INFO] Login attempt for user: principal_noble
+2026-01-22 20:49:31,278 [WARNING] Login failed for user: principal_noble - User not found
+2026-01-22 20:49:31,291 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(202) already exists.
+
+INFO:     127.0.0.1:52424 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+2026-01-22 20:49:38,799 [INFO] Login attempt for user: principal_noble
+2026-01-22 20:49:38,817 [WARNING] Login failed for user: principal_noble - User not found
+2026-01-22 20:49:38,831 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(203) already exists.
+
+INFO:     127.0.0.1:52429 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+2026-01-22 20:49:39,479 [INFO] Login attempt for user: principal_noble
+2026-01-22 20:49:39,495 [WARNING] Login failed for user: principal_noble - User not found
+2026-01-22 20:49:39,510 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(204) already exists.
+
+INFO:     127.0.0.1:52429 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+2026-01-22 20:50:01,965 [INFO] Login attempt for user: student_g1_1
+2026-01-22 20:50:01,983 [WARNING] Login failed for user: student_g1_1 - Invalid password.
+2026-01-22 20:50:01,997 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(205) already exists.
+
+2026-01-22 20:50:02,012 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(206) already exists.
+
+INFO:     127.0.0.1:52437 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+2026-01-22 20:50:02,889 [INFO] Login attempt for user: student_g1_1
+2026-01-22 20:50:02,905 [WARNING] Login failed for user: student_g1_1 - Invalid password.
+2026-01-22 20:50:02,918 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(207) already exists.
+
+2026-01-22 20:50:02,930 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(208) already exists.
+
+INFO:     127.0.0.1:52437 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+2026-01-22 20:50:11,878 [INFO] Login attempt for user: student_g1_1
+2026-01-22 20:50:11,978 [INFO] Password correct for student_g1_1, triggering 2FA.
+INFO:     127.0.0.1:52446 - "POST /api/auth/login HTTP/1.1" 200 OK
+2026-01-22 20:50:18,052 [INFO] 2FA Successful for user: student_g1_1
+2026-01-22 20:50:18,068 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(209) already exists.
+
+INFO:     127.0.0.1:52448 - "POST /api/auth/verify-2fa HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52448 - "GET /api/students/all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52448 - "OPTIONS /api/students/student_g1_1/data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52452 - "GET /api/classes/upcoming HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52448 - "GET /api/students/student_g1_1/data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52452 - "OPTIONS /api/students/student_g1_1/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52448 - "OPTIONS /api/students/student_g1_1/assignments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52452 - "GET /api/students/student_g1_1/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52448 - "GET /api/students/student_g1_1/assignments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52457 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+2026-01-22 20:50:41,516 [INFO] Login attempt for user: admin
+2026-01-22 20:50:41,532 [INFO] Password correct for admin, triggering 2FA.
+INFO:     127.0.0.1:52459 - "POST /api/auth/login HTTP/1.1" 200 OK
+2026-01-22 20:50:47,285 [INFO] 2FA Successful for user: admin
+2026-01-22 20:50:47,299 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(210) already exists.
+
+INFO:     127.0.0.1:52461 - "POST /api/auth/verify-2fa HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52461 - "GET /api/admin/schools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52461 - "GET /api/students/all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52461 - "GET /api/teacher/overview HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52461 - "OPTIONS /api/admin/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52461 - "GET /api/admin/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52461 - "OPTIONS /api/admin/permissions/list HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52461 - "GET /api/admin/permissions/list HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52461 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52461 - "GET /api/reports/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52461 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52461 - "HEAD /static/resources/c9dfe300-2e68-42ad-a327-2f5f531ae3f0.pdf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52461 - "GET /static/resources/c9dfe300-2e68-42ad-a327-2f5f531ae3f0.pdf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52461 - "GET /api/resources?category=Schedule&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52461 - "GET /api/resources?category=Form&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52461 - "GET /api/resources?category=Other&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52461 - "GET /api/resources?category=Schedule&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52461 - "GET /api/resources?category=Form&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52461 - "GET /api/resources?category=Policy&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52461 - "GET /api/resources?category=Policy&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52461 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52461 - "GET /api/reports/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52461 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52490 - "GET /api/admin/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52490 - "OPTIONS /api/students/HARISH/data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52490 - "GET /api/students/HARISH/data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52490 - "OPTIONS /api/students/HARISH/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52493 - "OPTIONS /api/students/HARISH/assignments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52490 - "GET /api/students/HARISH/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52493 - "GET /api/students/HARISH/assignments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52490 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52493 - "GET /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52490 - "GET /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52493 - "GET /api/teacher/overview HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52490 - "GET /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52493 - "OPTIONS /api/admin/users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52490 - "GET /api/admin/users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52493 - "GET /api/students/HARISH/data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52490 - "GET /api/students/HARISH/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52493 - "GET /api/students/HARISH/assignments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52490 - "GET /api/admin/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52493 - "GET /api/admin/permissions/list HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52510 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52510 - "GET /api/reports/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52510 - "GET /api/teacher/overview HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52510 - "GET /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52510 - "GET /api/teacher/overview HTTP/1.1" 200 OK
+2026-01-22 20:51:44,582 [INFO] Logout for user: admin
+2026-01-22 20:51:44,603 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(211) already exists.
+
+INFO:     127.0.0.1:52510 - "POST /api/auth/logout HTTP/1.1" 200 OK
+2026-01-22 20:52:07,738 [INFO] Login attempt for user: principal_noble
+2026-01-22 20:52:07,753 [WARNING] Login failed for user: principal_noble - User not found
+2026-01-22 20:52:07,765 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(212) already exists.
+
+INFO:     127.0.0.1:52526 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+2026-01-22 20:53:15,806 [INFO] 1 change detected
+2026-01-22 20:53:25,239 [INFO] Login attempt for user: admin
+2026-01-22 20:53:25,261 [INFO] Password correct for admin, triggering 2FA.
+INFO:     127.0.0.1:52533 - "POST /api/auth/login HTTP/1.1" 200 OK
+2026-01-22 20:53:28,976 [INFO] 2FA Successful for user: admin
+2026-01-22 20:53:28,990 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(213) already exists.
+
+INFO:     127.0.0.1:52533 - "POST /api/auth/verify-2fa HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52533 - "GET /api/admin/schools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52533 - "GET /api/students/all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52533 - "GET /api/teacher/overview HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52533 - "GET /api/admin/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52533 - "OPTIONS /api/admin/compliance/audit-logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52533 - "GET /api/admin/compliance/audit-logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52533 - "OPTIONS /api/admin/compliance/access-logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52533 - "GET /api/admin/compliance/access-logs HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52547 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52547 - "HEAD /static/resources/c9dfe300-2e68-42ad-a327-2f5f531ae3f0.pdf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52547 - "GET /static/resources/c9dfe300-2e68-42ad-a327-2f5f531ae3f0.pdf HTTP/1.1" 200 OK
+2026-01-22 21:00:52,291 [INFO] 1 change detected
+2026-01-22 21:07:40,396 [INFO] 1 change detected
+2026-01-22 21:08:22,820 [INFO] 1 change detected
+2026-01-22 21:09:01,167 [INFO] 1 change detected
+INFO:     127.0.0.1:52782 - "OPTIONS /api/auth/login HTTP/1.1" 200 OK
+2026-01-22 21:09:11,779 [INFO] Login attempt for user: admin
+2026-01-22 21:09:11,943 [INFO] Password correct for admin, triggering 2FA.
+INFO:     127.0.0.1:52782 - "POST /api/auth/login HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52786 - "OPTIONS /api/auth/verify-2fa HTTP/1.1" 200 OK
+2026-01-22 21:09:18,142 [INFO] 2FA Successful for user: admin
+2026-01-22 21:09:18,163 [ERROR] Failed to write auth log: duplicate key value violates unique constraint "auth_logs_pkey"
+DETAIL:  Key (id)=(214) already exists.
+
+INFO:     127.0.0.1:52786 - "POST /api/auth/verify-2fa HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52786 - "OPTIONS /api/admin/schools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52786 - "GET /api/admin/schools HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52786 - "OPTIONS /api/students/all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52786 - "GET /api/students/all HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52786 - "OPTIONS /api/teacher/overview HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52786 - "GET /api/teacher/overview HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52792 - "OPTIONS /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52794 - "OPTIONS /api/students/student_g1_1/data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52796 - "OPTIONS /api/admin/users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52786 - "GET /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52792 - "GET /api/students/student_g1_1/data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52794 - "GET /api/admin/users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52796 - "OPTIONS /api/students/student_g1_1/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52786 - "OPTIONS /api/students/student_g1_1/assignments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52792 - "GET /api/students/student_g1_1/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52794 - "GET /api/students/student_g1_1/assignments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52796 - "OPTIONS /api/admin/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52786 - "GET /api/admin/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52804 - "OPTIONS /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52804 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52804 - "HEAD /static/resources/c9dfe300-2e68-42ad-a327-2f5f531ae3f0.pdf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52804 - "GET /static/resources/c9dfe300-2e68-42ad-a327-2f5f531ae3f0.pdf HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52804 - "OPTIONS /api/resources?category=Policy&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52804 - "GET /api/resources?category=Policy&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52804 - "OPTIONS /api/resources?category=Schedule&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52804 - "GET /api/resources?category=Schedule&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52804 - "OPTIONS /api/resources?category=Form&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52804 - "GET /api/resources?category=Form&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52804 - "OPTIONS /api/resources?category=Other&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52804 - "GET /api/resources?category=Other&school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52804 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52804 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52804 - "OPTIONS /api/reports/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52804 - "GET /api/reports/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52804 - "GET /api/reports/summary HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52815 - "GET /api/teacher/overview HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52815 - "GET /api/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52815 - "GET /api/students/student_g1_1/data HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52815 - "GET /api/students/student_g1_1/groups HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52822 - "GET /api/students/student_g1_1/assignments HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52815 - "GET /api/admin/users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52822 - "GET /api/admin/users HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52815 - "GET /api/admin/roles HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52832 - "OPTIONS /api/sections HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52832 - "GET /api/sections HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52834 - "GET /api/resources?school_id=1 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:52834 - "GET /api/reports/summary HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+2026-01-22 22:57:22,695 [INFO] Shutting down...
+INFO:     Application shutdown complete.
+INFO:     Finished server process [8802]
+INFO:     Stopping reloader process [8749]

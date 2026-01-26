@@ -1,0 +1,208 @@
+<!-- STAFF VIEW -->
+<div id="staff-view" class="view">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold m-0 d-flex align-items-center gap-2">
+            <span class="material-icons text-primary-custom fs-2">people_alt</span> Staff Management
+        </h2>
+        <button class="btn btn-primary-custom d-flex align-items-center gap-2">
+            <span class="material-icons">person_add</span> Add New Staff
+        </button>
+    </div>
+
+    <!-- Staff Stats -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="dashboard-card p-4 h-100 border-start border-4 border-primary">
+                <h6 class="text-muted fw-bold text-uppercase mb-2">Total Staff</h6>
+                <h2 class="display-6 fw-bold text-dark mb-0">124</h2>
+                <small class="text-success fw-bold">All Departments</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-card p-4 h-100 border-start border-4 border-success">
+                <h6 class="text-muted fw-bold text-uppercase mb-2">Present Today</h6>
+                <h2 class="display-6 fw-bold text-dark mb-0">118</h2>
+                <small class="text-muted">95% Attendance</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-card p-4 h-100 border-start border-4 border-warning">
+                <h6 class="text-muted fw-bold text-uppercase mb-2">On Leave</h6>
+                <h2 class="display-6 fw-bold text-dark mb-0">6</h2>
+                <small class="text-danger fw-bold">Sick/Casual</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-card p-4 h-100 border-start border-4 border-info">
+                <h6 class="text-muted fw-bold text-uppercase mb-2">New Joiners</h6>
+                <h2 class="display-6 fw-bold text-dark mb-0">3</h2>
+                <small class="text-primary fw-bold">This Month</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Staff Directory -->
+    <div class="dashboard-card">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="fw-bold mb-0">Staff Directory</h5>
+            <div class="input-group w-auto">
+                <span class="input-group-text bg-light border-0"><span class="material-icons small">search</span></span>
+                <input type="text" class="form-control bg-light border-0" placeholder="Search staff...">
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Role</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                        <th>Contact</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                                    style="width: 40px; height: 40px;">JS</div>
+                                <div>
+                                    <span class="fw-bold d-block">John Smith</span>
+                                    <small class="text-muted">ID: STF-001</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>Senior Teacher</td>
+                        <td>Mathematics</td>
+                        <td><span class="badge bg-success bg-opacity-10 text-success">Active</span></td>
+                        <td>john.smith@school.edu</td>
+                        <td>
+                            <button class="btn btn-sm btn-light text-primary"><span
+                                    class="material-icons small">edit</span></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="avatar bg-info text-dark rounded-circle d-flex align-items-center justify-content-center"
+                                    style="width: 40px; height: 40px;">EM</div>
+                                <div>
+                                    <span class="fw-bold d-block">Emily Miller</span>
+                                    <small class="text-muted">ID: STF-042</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>Lab Assistant</td>
+                        <td>Science</td>
+                        <td><span class="badge bg-success bg-opacity-10 text-success">Active</span></td>
+                        <td>emily.m@school.edu</td>
+                        <td>
+                            <button class="btn btn-sm btn-light text-primary"><span
+                                    class="material-icons small">edit</span></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="avatar bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center"
+                                    style="width: 40px; height: 40px;">RJ</div>
+                                <div>
+                                    <span class="fw-bold d-block">Robert Johnson</span>
+                                    <small class="text-muted">ID: STF-103</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>Administrator</td>
+                        <td>Finance</td>
+                        <td><span class="badge bg-warning bg-opacity-10 text-warning">On Leave</span></td>
+                        <td>robert.j@school.edu</td>
+                        <td>
+                            <button class="btn btn-sm btn-light text-primary"><span
+                                    class="material-icons small">edit</span></button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- COMMUNICATION VIEW -->
+<div id="communication-view" class="view">
+    <h2 class="fw-bold mb-4 d-flex align-items-center gap-2">
+        <span class="material-icons text-primary-custom fs-2">forum</span> Communication Hub
+    </h2>
+
+    <div class="row g-4 h-100">
+        <!-- Sidebar / Menu -->
+        <div class="col-lg-3">
+            <div class="dashboard-card h-100 p-0 overflow-hidden">
+                <div class="p-3">
+                    <button
+                        class="btn btn-primary-custom w-100 mb-3 fw-bold py-2 d-flex align-items-center justify-content-center gap-2">
+                        <span class="material-icons">edit</span> Compose New
+                    </button>
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action active border-0 rounded-3 mb-1"><span
+                                class="material-icons align-middle me-2 small">inbox</span> Inbox <span
+                                class="badge bg-light text-primary float-end rounded-pill">3</span></a>
+                        <a href="#" class="list-group-item list-group-item-action border-0 rounded-3 mb-1"><span
+                                class="material-icons align-middle me-2 small">send</span> Sent</a>
+                        <a href="#" class="list-group-item list-group-item-action border-0 rounded-3 mb-1"><span
+                                class="material-icons align-middle me-2 small">drafts</span> Drafts</a>
+                        <a href="#" class="list-group-item list-group-item-action border-0 rounded-3 mb-1"><span
+                                class="material-icons align-middle me-2 small">campaign</span> Announcements</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Message Area -->
+        <div class="col-lg-9">
+            <div class="dashboard-card h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-3">
+                    <h5 class="fw-bold m-0">Inbox</h5>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-light btn-sm" title="Refresh"><span
+                                class="material-icons small">refresh</span></button>
+                        <button class="btn btn-light btn-sm" title="Filter"><span
+                                class="material-icons small">filter_list</span></button>
+                    </div>
+                </div>
+
+                <!-- Static Message List -->
+                <div class="list-group list-group-flush">
+                    <a href="#"
+                        class="list-group-item list-group-item-action p-3 border-bottom-0 mb-1 rounded bg-light">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1 fw-bold">Parent Meeting Schedule</h6>
+                            <small class="text-muted">10 mins ago</small>
+                        </div>
+                        <p class="mb-1 small text-muted">Meeting regarding the upcoming sports day event schedule and
+                            preparations...</p>
+                        <small class="text-primary-custom fw-bold">From: Mrs. Davis (Principal)</small>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action p-3 border-bottom-0 mb-1 rounded">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1 fw-bold">New Policy Update: Grade 10</h6>
+                            <small class="text-muted">Yesterday</small>
+                        </div>
+                        <p class="mb-1 small text-muted">Please review the attached document regarding the new grading
+                            policy changes...</p>
+                        <small class="text-muted">From: Admin Dept.</small>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action p-3 border-bottom-0 mb-1 rounded">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1 fw-bold">Library Maintenance</h6>
+                            <small class="text-muted">2 days ago</small>
+                        </div>
+                        <p class="mb-1 small text-muted">The library will be closed for maintenance this Friday...</p>
+                        <small class="text-muted">From: Mr. Green</small>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,52 @@
+
+@app.post("/api/ai/generate-quiz", response_model=GenerateQuizResponse)
+async def generate_quiz(
+    topic: str = Form(...),
+    difficulty: str = Form("Medium"),
+    question_count: int = Form(5),
+    type: str = Form("Multiple Choice"),
+    description: Optional[str] = Form(None),
+    file: Optional[UploadFile] = File(None)
+):
+    if not AI_ENABLED:
+         return GenerateQuizResponse(content='[{"question": "AI Disabled", "options": ["A", "B"], "correct_answer": "A"}]')
+
+    try:
+        # PDF Processing
+        pdf_context = ""
+        if file and PyPDF2:
+            try:
+                if file.filename.endswith('.pdf'):
+                    pdf_reader = PyPDF2.PdfReader(file.file)
+                    for page in pdf_reader.pages:
+                        pdf_context += page.extract_text() + "\n"
+                    # Limit context
+                    pdf_context = pdf_context[:5000]
+                else:
+                    content = await file.read()
+                    pdf_context = content.decode('utf-8', errors='ignore')[:5000]
+            except Exception as e:
+                logger.error(f"File read error: {e}")
+
+        # Enforce JSON Structure for Database Compatibility
+        prompt = f"""
+        Generate a {difficulty} difficulty {type} quiz about "{topic}".
+        """
+        if description:
+            prompt += f"Context/Description: {description}\n"
+        
+        if pdf_context:
+            prompt += f"\nReference Material (Use this content to generate questions):\n{pdf_context}\n"
+            
+        prompt += f"""
+        It should have {question_count} questions.
+        Return ONLY a raw JSON array. Do not include markdown formatting (like ```json), just the array.
+        Format:
+        [
+            {{
+                "question": "Question text",
+                "options": ["Option A", "Option B", "Option C", "Option D"],
+                "correct_answer": "Option A"
+            }}
+        ]
+        """

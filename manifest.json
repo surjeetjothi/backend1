@@ -1,0 +1,20 @@
+{
+    "name": "Class Bridge Portal",
+    "short_name": "ClassBridge",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#F3F4FF",
+    "theme_color": "#4D44B5",
+    "icons": [
+        {
+            "src": "static/logo.jpg",
+            "sizes": "192x192",
+            "type": "image/jpeg"
+        },
+        {
+            "src": "static/logo.jpg",
+            "sizes": "512x512",
+            "type": "image/jpeg"
+        }
+    ]
+}

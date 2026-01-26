@@ -1,0 +1,154 @@
+<!-- Resources Landing View (Separate Page) -->
+<div id="resources-landing-view" class="view"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; overflow-y: auto; background-color: #f0fdf4;">
+
+    <!-- Navbar for Resources View -->
+    <nav class="navbar navbar-expand-lg position-fixed top-0 w-100 py-3 glass-navbar"
+        style="background: white; z-index: 100; border-bottom: 1px solid rgba(0,0,0,0.05);">
+        <div class="container d-flex align-items-center justify-content-between">
+            <a class="navbar-brand d-flex align-items-center gap-2 text-primary-custom" href="#"
+                onclick="switchView('landing-view')">
+                <img src="./static/logo.jpg" alt="Logo" style="width: 40px; height: 40px; border-radius: 50%;">
+                <span class="fw-bold fs-4" style="font-family: 'Poppins', sans-serif;">Class
+                    Bridge</span>
+            </a>
+
+            <div class="d-flex gap-2">
+                <button class="btn btn-outline-primary rounded-pill px-4 fw-bold" onclick="switchView('landing-view')">
+                    Back
+                </button>
+                <button class="btn btn-primary rounded-pill px-4 fw-bold"
+                    onclick="selectLoginRole('Teacher'); showLogin()" style="background-color: #059669; border: none;">
+                    Teacher Access
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" style="padding-top: 100px;">
+        <div class="container-fluid p-0">
+            <!-- Hero Section (Green/Resources Theme) -->
+            <section id="resources-hero"
+                class="py-5 position-relative text-white overflow-hidden rounded-5 shadow-lg mb-5"
+                style="background: linear-gradient(135deg, #059669 0%, #047857 100%); min-height: 75vh; display: flex; align-items: center;">
+
+                <!-- Background Animation Target -->
+
+                <div class="container position-relative z-2">
+                    <div class="row align-items-center">
+                        <div class="col-lg-6 text-start">
+                            <span
+                                class="badge bg-white bg-opacity-20 rounded-pill px-3 py-2 mb-4 border border-white border-opacity-25">
+                                Content Library
+                            </span>
+                            <h1 class="display-3 fw-bold mb-4" style="line-height: 1.1;">
+                                World-Class Content. <br>
+                                <span class="text-warning">Zero Friction.</span>
+                            </h1>
+                            <p class="lead opacity-90 mb-5">
+                                Stop reinventing the wheel. Access thousands of vetted lesson plans,
+                                interactive quizzes, and multimedia assets instantly.
+                            </p>
+
+                            <div class="d-flex gap-3">
+                                <button
+                                    class="btn btn-light text-success fw-bold btn-lg rounded-pill px-5 py-3 shadow-lg transform-hover"
+                                    onclick="selectLoginRole('Teacher'); showLogin()">
+                                    Browse Library
+                                </button>
+                                <button
+                                    class="btn btn-outline-light btn-lg rounded-pill px-5 py-3 fw-bold transform-hover"
+                                    onclick="document.getElementById('resource-features').scrollIntoView({behavior: 'smooth'})">
+                                    Learn More
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-lg-6 d-none d-lg-block position-relative">
+                            <!-- Mockup of Content Card -->
+                            <div class="bg-white p-3 rounded-4 shadow-lg text-dark transform-hover"
+                                style="transform: rotate(2deg); max-width: 450px; margin-left: auto;">
+                                <!-- Fake Video Player -->
+                                <div class="bg-dark rounded-3 mb-3 position-relative d-flex align-items-center justify-content-center"
+                                    style="height: 200px; background: #e5e7eb;">
+                                    <span
+                                        class="material-icons text-white display-1 opacity-75">play_circle_filled</span>
+                                    <div
+                                        class="position-absolute bottom-0 start-0 p-3 text-white w-100 bg-gradient-to-t from-black to-transparent">
+                                        <small>Science • Grade 10</small>
+                                        <h6 class="mb-0">Understanding Photosynthesis</h6>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2 mb-2">
+                                    <span class="badge bg-light text-dark border">PDF Worksheet</span>
+                                    <span class="badge bg-light text-dark border">Quiz Key</span>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between mt-3">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center"
+                                            style="width:32px; height:32px;">SJ</div>
+                                        <small class="fw-bold">Sarah J.</small>
+                                    </div>
+                                    <small class="text-muted">Downloaded 1.2k times</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Features Grid -->
+            <section class="py-5 px-3" id="resource-features">
+                <div class="container">
+                    <div class="text-center mb-5">
+                        <h2 class="display-6 fw-bold">Fuel for your teaching.</h2>
+                    </div>
+
+                    <div class="row g-4">
+                        <!-- Feature 1 -->
+                        <div class="col-md-4">
+                            <div class="glowing-card">
+                                <div class="glowing-card-border"></div>
+                                <div class="glowing-card-content transform-hover">
+                                    <div class="mb-3 text-success">
+                                        <span class="material-icons fs-1">menu_book</span>
+                                    </div>
+                                    <h4 class="fw-bold">Lesson Plans</h4>
+                                    <p class="text-muted">Standard-aligned curriculums ready to drop into your schedule
+                                        today.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Feature 2 -->
+                        <div class="col-md-4">
+                            <div class="glowing-card">
+                                <div class="glowing-card-border"></div>
+                                <div class="glowing-card-content transform-hover">
+                                    <div class="mb-3 text-danger">
+                                        <span class="material-icons fs-1">smart_display</span>
+                                    </div>
+                                    <h4 class="fw-bold">Multimedia</h4>
+                                    <p class="text-muted">High-quality videos and interactive simulations that make
+                                        concepts stick.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Feature 3 -->
+                        <div class="col-md-4">
+                            <div class="glowing-card">
+                                <div class="glowing-card-border"></div>
+                                <div class="glowing-card-content transform-hover">
+                                    <div class="mb-3 text-primary">
+                                        <span class="material-icons fs-1">group_work</span>
+                                    </div>
+                                    <h4 class="fw-bold">Community</h4>
+                                    <p class="text-muted">Share, remix, and collaborate on resources with educators
+                                        worldwide.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,109 @@
+<!-- SUPER ADMIN VIEW -->
+<div id="super-admin-view" class="view">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold m-0 d-flex align-items-center gap-2">
+            <span class="material-icons text-dark fs-2">admin_panel_settings</span> Super Admin Dashboard
+        </h2>
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary-custom d-flex align-items-center gap-2" data-bs-toggle="modal"
+                data-bs-target="#createSchoolModal">
+                <span class="material-icons">add_business</span> New School
+            </button>
+            <button class="btn btn-outline-danger d-flex align-items-center gap-2 fw-bold" onclick="handleLogout()">
+                <span class="material-icons">logout</span> Logout
+            </button>
+        </div>
+    </div>
+
+    <!-- Global Stats -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="dashboard-card p-4 h-100 bg-gradient-primary text-white">
+                <h6 class="opacity-75 fw-bold text-uppercase mb-2">Total Monthly Revenue</h6>
+                <h2 class="display-5 fw-bold mb-1" id="sa-revenue">$0.00</h2>
+                <small class="opacity-75">SaaS Subscriptions</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="dashboard-card p-4 h-100 bg-white border-start border-4 border-primary">
+                <h6 class="text-muted fw-bold text-uppercase mb-2">Active Schools</h6>
+                <h2 class="display-5 fw-bold mb-1 text-dark" id="sa-schools-count">0</h2>
+                <small class="text-success fw-bold">Tenants Onboarded</small>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="dashboard-card p-4 h-100 bg-white border-start border-4 border-info">
+                <h6 class="text-muted fw-bold text-uppercase mb-2">Total Users</h6>
+                <h2 class="display-5 fw-bold mb-1 text-dark" id="sa-users-count">0</h2>
+                <small class="text-muted">Across all instances</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schools List -->
+    <div class="dashboard-card">
+        <h5 class="fw-bold mb-3">Registered Schools / Tenants</h5>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>School Name</th>
+                        <th>Plan</th>
+                        <th>Admin Email</th>
+                        <th>Students</th>
+                        <th>Joined</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="schools-table-body">
+                    <!-- Schools injected via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- CREATE SCHOOL MODAL -->
+<div class="modal fade" id="createSchoolModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-bottom-0">
+                <h5 class="modal-title fw-bold text-primary-custom">Onboard New School</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-5 pb-5">
+                <form id="create-school-form" onsubmit="handleCreateSchool(event)">
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="school-name" placeholder="School Name" required>
+                        <label for="school-name">School Name</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="text" class="form-control" id="school-address" placeholder="Address">
+                        <label for="school-address">Address (Optional)</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="email" class="form-control" id="school-admin-email" placeholder="Admin Email"
+                            required>
+                        <label for="school-admin-email">Admin Email (Principal)</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input type="password" class="form-control" id="school-admin-password"
+                            placeholder="Initial Password" required>
+                        <label for="school-admin-password">Initial Admin Password</label>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <select class="form-select" id="school-plan">
+                            <option value="Free">Free Tier</option>
+                            <option value="Pro">Pro Plan ($100/mo)</option>
+                            <option value="Enterprise">Enterprise ($500/mo)</option>
+                        </select>
+                        <label for="school-plan">Subscription Plan</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary-custom w-100 py-2 mb-3">Create Tenant</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: noble-nexus-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend:app --host 0.0.0.0 --port $PORT
+    connectionString: null # Render interprets envVars for DB mostly, but this is explicit
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DATABASE_URL
+        sync: false # You must enter this in the Render Dashboard
+      - key: GROQ_API_KEY
+        sync: false # You must enter this in the Render Dashboard
+      - key: GOOGLE_CLIENT_ID
+        sync: false # Optional: Set if you want to override the default Client ID

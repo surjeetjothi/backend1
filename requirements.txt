@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+pandas
+numpy
+scikit-learn
+groq
+pydantic
+python-multipart
+requests
+psycopg2-binary
+
+pypdf
+python-dotenv

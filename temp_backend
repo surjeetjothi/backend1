@@ -1,0 +1,40 @@
+class ClassScheduleRequest(BaseModel):
+    topic: str
+    date: str
+    meet_link: str
+    target_students: Optional[List[str]] = None
+
+@app.get("/api/classes/upcoming")
+async def get_upcoming_classes(student_id: Optional[str] = None):
+    conn = get_db_connection()
+    query = "SELECT * FROM live_classes ORDER BY date ASC"
+    classes = conn.execute(query).fetchall()
+    conn.close()
+    
+    # Filter logic could go here if `target_students` column is used strictly
+    # For now returns all for simplicity, or we can filter in python
+    valid_classes = []
+    for row in classes:
+        cls = dict(row)
+        # If student_id is provided, check if permitted
+        if student_id:
+             try:
+                 targets = json.loads(cls.get('target_students', '[]') or '[]')
+                 # If targets is empty, assume public/all? Or if explicit list, check membership
+                 if targets and student_id not in targets:
+                     continue 
+             except: pass
+        valid_classes.append(cls)
+
+    return valid_classes
+
+@app.post("/api/classes")
+async def schedule_class_endpoint(request: ClassScheduleRequest):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    targets = json.dumps(request.target_students) if request.target_students else "[]"
+    cursor.execute("INSERT INTO live_classes (topic, date, meet_link, target_students) VALUES (?, ?, ?, ?)",
+                   (request.topic, request.date, request.meet_link, targets))
+    conn.commit()
+    conn.close()
+    return {"message": "Class scheduled successfully."}
