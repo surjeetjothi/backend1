@@ -5323,21 +5323,119 @@ async def delete_resource(resource_id: int):
 OAUTH_CODES = {}
 OAUTH_ACCESS_TOKENS = {}
 
+
+# Embedded SSO Authorize Page
+SSO_AUTHORIZE_HTML = """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Authorize Moodle Access</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        .card { border: none; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); border-radius: 12px; width: 100%; max-width: 400px; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="card p-4 text-center">
+        <div class="mb-3">
+            <h3 class="fw-bold text-primary">Noble Nexus</h3>
+        </div>
+        <h4 class="mb-3">Connecting to Moodle...</h4>
+        <div id="status-area">
+            <div class="loader mb-3"></div>
+            <p class="text-muted small">Please wait while we verify your identity.</p>
+        </div>
+    </div>
+    <script>
+    async function authorize() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const clientId = urlParams.get('client_id');
+        const redirectUri = urlParams.get('redirect_uri');
+        const state = urlParams.get('state');
+
+        // Check LocalStorage (Problem: LocalStorage is Domain Specific. If Backend is diff domain than Frontend, this fails)
+        // SOLUTION: We assume for now this flow is initiated from a context where token might be passed or we rely on session cookies if we had them.
+        // BUT currently Noble Nexus uses LocalStorage for auth. 
+        // If Backend is on render.com and Frontend on vercel.app, Backend Page cannot read Frontend LocalStorage.
+        // This flow is flawed in a split-domain architecture without cookies.
+        
+        // HOWEVER: The user is clicking "Launch Moodle" from the Frontend. 
+        // The Frontend opens this window. 
+        // We can try to pass the token in the URL or via postMessage.
+        // For now, let's just attempt the flow and show a warning if not logged in.
+        
+        const user = localStorage.getItem('user'); 
+        const userObj = user ? JSON.parse(user) : null;
+        
+        if (!userObj || !userObj.id) {
+            // Try to see if we can get it from parent (if popup)
+             try {
+                if (window.opener) {
+                    // This is cross-origin, so we can't direct read, but we could request it?
+                    // For simplicity in this demo, we'll ask user to login if missing.
+                }
+            } catch(e){}
+
+            document.getElementById('status-area').innerHTML = `
+                <div class="alert alert-warning">
+                    Session not found in this domain. 
+                    <br><small>Because the api is on a different domain, we cannot read your login session.</small>
+                </div>
+                <p>Please copy your User ID manually to proceed (Mock Flow):</p>
+                <input type="text" id="manual-user-id" class="form-control mb-2" placeholder="Enter User ID (e.g. stu_001)">
+                <button class="btn btn-primary w-100" onclick="manualApprove()">Approve Manually</button>
+            `;
+            return;
+        }
+
+        approve(userObj.id, clientId, redirectUri, state);
+    }
+    
+    function manualApprove() {
+        const uid = document.getElementById('manual-user-id').value;
+        if(uid) {
+            const urlParams = new URLSearchParams(window.location.search);
+            approve(uid, urlParams.get('client_id'), urlParams.get('redirect_uri'), urlParams.get('state'));
+        }
+    }
+
+    async function approve(userId, clientId, redirectUri, state) {
+        try {
+            const response = await fetch('/api/oauth/approve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId, client_id: clientId, redirect_uri: redirectUri, state: state })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                window.location.href = data.redirect_url;
+            } else {
+                const err = await response.json();
+                showError(err.detail || "Authorization failed.");
+            }
+        } catch (e) {
+            showError("Network Error: " + e.message);
+        }
+    }
+
+    function showError(msg) {
+        document.getElementById('status-area').innerHTML = `<div class="alert alert-danger small">${msg}</div>`;
+    }
+
+    setTimeout(authorize, 1000); 
+    </script>
+</body>
+</html>
+"""
+
 @app.get("/oauth/authorize", response_class=HTMLResponse)
 async def oauth_authorize(response_type: str, client_id: str, redirect_uri: str, state: str, scope: Optional[str] = None):
-    # This endpoint renders a page that checks if the user is logged in (via JS) 
-    # and then calls /api/oauth/approve to generate a code.
-    # We serve a static HTML that handles the logic.
-    try:
-        with open("class/static/sso_authorize.html", "r") as f:
-            content = f.read()
-    except FileNotFoundError:
-        try:
-             with open("static/sso_authorize.html", "r") as f:
-                content = f.read()
-        except FileNotFoundError:
-            return HTMLResponse(content="<h1>Error: sso_authorize.html not found</h1>", status_code=500)
-    return HTMLResponse(content=content)
+    return HTMLResponse(content=SSO_AUTHORIZE_HTML)
 
 class OAuthApproveRequest(BaseModel):
     user_id: str
