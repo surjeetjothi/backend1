@@ -245,6 +245,61 @@
             color: var(--text-white);
         }
 
+        /* --- SIDEBAR SUBMENUS --- */
+        .nav-submenu {
+            display: none;
+            flex-direction: column;
+            padding-left: 12px;
+            margin-bottom: 8px;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out;
+        }
+
+        .nav-submenu.open {
+            display: flex;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .nav-submenu-item {
+            padding: 8px 12px 8px 42px;
+            /* Indent to align with text of parent */
+            font-size: 14px;
+            color: var(--text-sidebar-mute);
+            text-decoration: none;
+            border-radius: 6px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-submenu-item:hover,
+        .nav-submenu-item.active {
+            color: var(--text-white);
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-item .arrow-icon {
+            margin-left: auto;
+            font-size: 18px;
+            transition: transform 0.3s ease;
+        }
+
+        .nav-item.expanded .arrow-icon {
+            transform: rotate(180deg);
+        }
+
         /* --- WIDGETS --- */
         .metric-widget {
             background-color: #fff;
@@ -2169,6 +2224,60 @@
             </div>
         </div>
 
+
+        <!-- NEW VIEWS FOR SIDEBAR SUB-MENUS -->
+        <!-- Create Class View -->
+        <div id="create-class-view" class="view">
+            <h2 class="fw-bold mb-4">Create New Class</h2>
+            <div class="card p-4 border-0 shadow-sm">
+                <form>
+                    <div class="mb-3">
+                        <label class="form-label">Class Name</label>
+                        <input type="text" class="form-control" placeholder="e.g. Mathematics 101">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Grade Level</label>
+                        <select class="form-select">
+                            <option>Grade 9</option>
+                            <option>Grade 10</option>
+                            <option>Grade 11</option>
+                            <option>Grade 12</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary-custom" onclick="alert('Class Created!')">Create
+                        Class</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Attendance Report View -->
+        <div id="attendance-report-view" class="view">
+            <h2 class="fw-bold mb-4">Attendance Report</h2>
+            <div class="card p-4 border-0 shadow-sm">
+                <p class="text-muted">Attendance analytics and reports will appear here.</p>
+                <div class="d-flex gap-3">
+                    <button class="btn btn-outline-primary">Download CSV</button>
+                    <button class="btn btn-outline-info">Print Report</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Report View -->
+        <div id="performance-report-view" class="view">
+            <h2 class="fw-bold mb-4">Performance Report</h2>
+            <div class="card p-4 border-0 shadow-sm">
+                <p class="text-muted">Detailed student performance metrics will appear here.</p>
+            </div>
+        </div>
+
+        <!-- Upcoming Exams View -->
+        <div id="upcoming-exams-view" class="view">
+            <h2 class="fw-bold mb-4">Upcoming Exams</h2>
+            <div class="card p-4 border-0 shadow-sm">
+                <p class="text-muted">List of scheduled exams.</p>
+            </div>
+        </div>
+
         <!-- Upload Resource Modal (Legacy) -->
         <div class="modal fade" id="uploadResourceModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
@@ -3224,6 +3333,11 @@
                     onclick="exportTeacherData()">
                     <span class="material-icons">download</span> Export
                 </button>
+                <button class="btn btn-primary-custom shadow-sm d-flex align-items-center gap-2 text-white fw-bold"
+                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border:none;"
+                    data-bs-toggle="modal" data-bs-target="#engagementModal">
+                    <span class="material-icons">auto_fix_high</span> Engagement Helper
+                </button>
             </div>
 
             <div class="row g-4 mb-4">
@@ -3300,6 +3414,216 @@
                             <!-- Rows injected via JS -->
                         </tbody>
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Class Management View -->
+        <div id="teacher-class-management-view" class="view">
+            <h2 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                <span class="material-icons text-primary-custom fs-2">class</span> Class Management
+            </h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white fw-bold">My Classes</div>
+                        <div class="list-group list-group-flush">
+                            <button class="list-group-item list-group-item-action active">Grade 9 - Math (Sec
+                                A)</button>
+                            <button class="list-group-item list-group-item-action">Grade 10 - Physics (Sec B)</button>
+                            <button class="list-group-item list-group-item-action">Grade 8 - Math (Sec C)</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+                            <span>Student List (Grade 9-A)</span>
+                            <button class="btn btn-sm btn-outline-primary">Export CSV</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Attendance</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>S001</td>
+                                        <td>Alice Smith</td>
+                                        <td>95%</td>
+                                        <td><span class="badge bg-success">Active</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>S002</td>
+                                        <td>Bob Johnson</td>
+                                        <td>88%</td>
+                                        <td><span class="badge bg-success">Active</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>S003</td>
+                                        <td>Charlie Brown</td>
+                                        <td>92%</td>
+                                        <td><span class="badge bg-success">Active</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Content & Assignments View -->
+        <div id="teacher-content-view" class="view">
+            <h2 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                <span class="material-icons text-warning fs-2">source</span> Content & Assignments
+            </h2>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3">Upload Study Materials</h5>
+                            <div class="border rounded p-4 text-center bg-light"
+                                style="border-style: dashed !important;">
+                                <span class="material-icons text-secondary fs-1">cloud_upload</span>
+                                <p class="mb-2">Drag & Drop notes, PDFs, or slides here</p>
+                                <button class="btn btn-primary-custom btn-sm">Browse Files</button>
+                            </div>
+                            <div class="mt-3">
+                                <h6 class="text-muted small fw-bold uppercase">Recent Uploads</h6>
+                                <ul class="list-group list-group-flush small">
+                                    <li class="list-group-item d-flex justify-content-between">
+                                        <span>Algebra_Notes_Ch1.pdf</span> <span class="text-success">Uploaded</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3">Create Assignment</h5>
+                            <form>
+                                <div class="mb-3">
+                                    <label class="form-label">Title</label>
+                                    <input type="text" class="form-control" placeholder="e.g. Algebra Worksheet 1">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Due Date</label>
+                                    <input type="date" class="form-control">
+                                </div>
+                                <div class="d-grid">
+                                    <button type="button" class="btn btn-primary-custom">Assign to Class</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Assessment View -->
+        <div id="teacher-assessment-view" class="view">
+            <h2 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                <span class="material-icons text-danger fs-2">assignment_turned_in</span> Assessment & Grading
+            </h2>
+            <ul class="nav nav-pills mb-4">
+                <li class="nav-item"><a class="nav-link active" href="#">Mark Attendance</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">Gradebook</a></li>
+                <li class="nav-item"><a class="nav-link" href="#">Create Exam</a></li>
+            </ul>
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="fw-bold">Today's Attendance - Grade 9A</h5>
+                    <div class="table-responsive mt-3">
+                        <table class="table table-bordered align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Student</th>
+                                    <th class="text-center">Present</th>
+                                    <th class="text-center">Absent</th>
+                                    <th class="text-center">Late</th>
+                                    <th>Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Alice Smith</td>
+                                    <td class="text-center"><input type="radio" name="att_1" checked></td>
+                                    <td class="text-center"><input type="radio" name="att_1"></td>
+                                    <td class="text-center"><input type="radio" name="att_1"></td>
+                                    <td><input type="text" class="form-control form-control-sm"></td>
+                                </tr>
+                                <tr>
+                                    <td>Bob Johnson</td>
+                                    <td class="text-center"><input type="radio" name="att_2" checked></td>
+                                    <td class="text-center"><input type="radio" name="att_2"></td>
+                                    <td class="text-center"><input type="radio" name="att_2"></td>
+                                    <td><input type="text" class="form-control form-control-sm"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <button class="btn btn-primary-custom mt-2">Save Attendance</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Communication View -->
+        <div id="teacher-communication-view" class="view">
+            <h2 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                <span class="material-icons text-info fs-2">campaign</span> Communication Center
+            </h2>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white fw-bold">📢 Announce to Class</div>
+                        <div class="card-body p-4">
+                            <div class="mb-3">
+                                <label class="form-label">Select Classes</label>
+                                <select class="form-select" multiple>
+                                    <option selected>Grade 9 - Math</option>
+                                    <option>Grade 10 - Physics</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Message</label>
+                                <textarea class="form-control" rows="4"
+                                    placeholder="Type your announcement..."></textarea>
+                            </div>
+                            <button class="btn btn-primary-custom w-100">Post Announcement</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white fw-bold">💬 Recent Messages</div>
+                        <div class="list-group list-group-flush">
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">Mrs. Johnson (Parent)</h6>
+                                    <small>10 mins ago</small>
+                                </div>
+                                <p class="mb-1 small text-muted">Regarding Bob's absence yesterday?</p>
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">Principal</h6>
+                                    <small>1 hr ago</small>
+                                </div>
+                                <p class="mb-1 small text-muted">Staff meeting at 4 PM.</p>
+                            </a>
+                        </div>
+                        <div class="card-footer bg-white border-0 text-center">
+                            <button class="btn btn-sm btn-outline-primary">View All Messages</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -4070,6 +4394,8 @@
         </div>
 
         <!-- Groups Management View -->
+        <!-- Groups Management View (DISABLED) -->
+        <!-- 
         <div id="groups-view" class="view">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2 class="fw-bold">👥 Learning Management System (LMS)</h2>
@@ -4078,121 +4404,11 @@
                 </button>
             </div>
             <div id="groups-list" class="row g-4">
-                <!-- Group cards injected here -->
             </div>
         </div>
+        -->
 
-        <!-- LMS Course Detail View -->
-        <div id="course-detail-view" class="view">
-            <button class="btn btn-outline-secondary mb-3" onclick="switchView('groups-view')">
-                <span class="material-icons align-middle">arrow_back</span> Back to Courses
-            </button>
 
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-body p-4">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <h2 id="course-title" class="fw-bold mb-1">Course Title</h2>
-                            <p id="course-desc" class="text-muted">Course description goes here.</p>
-                        </div>
-                        <span id="course-subject-badge" class="badge bg-primary-custom fs-6">Subject</span>
-                    </div>
-                </div>
-                <div class="card-footer bg-white border-top px-4">
-                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
-                        <li class="nav-item">
-                            <button class="nav-link active fw-bold text-dark" data-bs-toggle="tab"
-                                data-bs-target="#course-materials-tab">
-                                📚 Materials
-                            </button>
-                        </li>
-                        <li class="nav-item">
-                            <button class="nav-link fw-bold text-dark" data-bs-toggle="tab"
-                                data-bs-target="#course-quizzes-tab">
-                                📝 Quizzes
-                            </button>
-                        </li>
-                        <li class="nav-item">
-                            <button class="nav-link fw-bold text-dark" data-bs-toggle="tab"
-                                data-bs-target="#course-members-tab">
-                                👥 Students
-                            </button>
-                        </li>
-                        <li class="nav-item">
-                            <button class="nav-link fw-bold text-dark" data-bs-toggle="tab"
-                                data-bs-target="#course-assignments-tab">
-                                📋 Assignments
-                            </button>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="tab-content">
-                <!-- MATERIALS TAB -->
-                <div class="tab-pane fade show active" id="course-materials-tab">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h4 class="fw-bold">Course Materials</h4>
-                        <div class="d-flex gap-2">
-                            <button id="add-video-btn" class="btn btn-danger btn-sm d-none"
-                                onclick="openAddVideoModal()">
-                                <span class="material-icons align-middle fs-6">video_library</span> Add Video
-                            </button>
-                            <button id="upload-material-btn" class="btn btn-success btn-sm d-none"
-                                onclick="document.getElementById('file-upload-input').click()">
-                                <span class="material-icons align-middle fs-6">upload</span> Upload File
-                            </button>
-                        </div>
-                        <input type="file" id="file-upload-input" class="d-none" onchange="handleMaterialUpload(this)">
-                    </div>
-                    <div id="materials-list" class="row g-3">
-                        <!-- Materials injected here -->
-                        <p class="text-muted">No materials uploaded yet.</p>
-                    </div>
-                </div>
-
-                <!-- QUIZZES TAB -->
-                <div class="tab-pane fade" id="course-quizzes-tab">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h4 class="fw-bold">Assessments & Quizzes</h4>
-                        <!-- Currently generated via AI modal, but could allow manual later -->
-                    </div>
-                    <div id="quizzes-list" class="list-group">
-                        <!-- Quizzes injected here -->
-                        <p class="text-muted">No quizzes available.</p>
-                    </div>
-                </div>
-
-                <!-- MEMBERS TAB -->
-                <div class="tab-pane fade" id="course-members-tab">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h4 class="fw-bold">Enrolled Students</h4>
-                        <button id="manage-members-btn" class="btn btn-outline-primary btn-sm d-none"
-                            onclick="openManageMembersModal()">
-                            Manage Members
-                        </button>
-                    </div>
-                    <ul id="course-members-list" class="list-group">
-                        <!-- Members injected here -->
-                    </ul>
-                </div>
-
-                <!-- ASSIGNMENTS TAB -->
-                <div class="tab-pane fade" id="course-assignments-tab">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h4 class="fw-bold">Assignments & Projects</h4>
-                        <button id="create-assignment-btn" class="btn btn-primary-custom btn-sm d-none"
-                            onclick="openCreateAssignmentModal()">
-                            <span class="material-icons align-middle fs-6 me-1">add_task</span> New Assignment / Project
-                        </button>
-                    </div>
-                    <div id="assignments-list" class="list-group">
-                        <!-- Assignments injected here -->
-                        <p class="text-muted text-center py-4">No assignments yet.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <!-- Lesson Plan Modal -->
         <div class="modal fade" id="lessonPlanModal" tabindex="-1" aria-hidden="true">
@@ -4496,7 +4712,7 @@
         </div>
 
         <!-- Parent View (Observer Mode) -->
-        <div id="parent-view" class="view">
+        <div id="parent-dashboard-view" class="view">
             <h2 class="fw-bold mb-4 d-flex align-items-center gap-2">
                 <span class="material-icons text-primary-custom fs-2">family_restroom</span> Parent Portal
             </h2>
@@ -4523,36 +4739,208 @@
                     <!-- Metrics injected here -->
                 </div>
 
-                <!-- Attendance & Grades Summary -->
-                <div class="row g-4 mb-4">
-                    <div class="col-md-6">
-                        <div class="card border-0 shadow-sm h-100">
-                            <div class="card-body">
-                                <h6 class="fw-bold text-muted text-uppercase small">Attendance Rate</h6>
-                                <h2 class="display-6 fw-bold text-success" id="parent-attendance">0%</h2>
-                            </div>
-                        </div>
+                <!-- Recent Updates Area -->
+                <div class="alert alert-info border-start border-4 border-info shadow-sm">
+                    <h5 class="alert-heading fw-bold d-flex align-items-center"><span
+                            class="material-icons me-2">notifications_active</span> Key Updates</h5>
+                    <ul class="mb-0 small">
+                        <li>School closes early tomorrow at 2 PM.</li>
+                        <li>Report cards have been published.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Academic Progress View -->
+        <div id="parent-academic-view" class="view">
+            <h2 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                <span class="material-icons text-primary-custom fs-2">auto_stories</span> Academic Progress
+            </h2>
+
+            <div class="row g-4 mb-4">
+                <div class="col-12">
+                    <div class="alert alert-light border shadow-sm">
+                        <h5 class="alert-heading fw-bold">Teacher Feedback</h5>
+                        <p id="parent-feedback" class="mb-0 text-muted">Loading feedback...</p>
                     </div>
-                    <div class="col-md-6">
-                        <div class="card border-0 shadow-sm h-100">
-                            <div class="card-body">
-                                <h6 class="fw-bold text-muted text-uppercase small">Recent AI Feedback</h6>
-                                <p id="parent-feedback" class="small fst-italic text-muted mb-0">No feedback available.
-                                </p>
-                            </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-4">
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white fw-bold">Recent Marks</div>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Subject</th>
+                                        <th>Exam</th>
+                                        <th>Score</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Math</td>
+                                        <td>Unit Test</td>
+                                        <td class="text-success fw-bold">88%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Science</td>
+                                        <td>Lab</td>
+                                        <td class="text-primary fw-bold">92%</td>
+                                    </tr>
+                                    <tr>
+                                        <td>English</td>
+                                        <td>Essay</td>
+                                        <td class="text-warning fw-bold">75%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white fw-bold">Performance Chart</div>
+                        <div class="card-body">
+                            <div id="parent-progress-chart" style="height: 250px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                <!-- Read-Only Progress Graph -->
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-body p-4">
-                        <h5 class="fw-bold mb-3">Academic Progress</h5>
-                        <div id="parent-progress-chart" style="height: 300px;"></div>
+            <div class="row g-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white fw-bold">Report Cards</div>
+                        <div class="list-group list-group-flush">
+                            <a href="#"
+                                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                <div><span class="material-icons align-middle text-danger me-2">picture_as_pdf</span>
+                                    Term 1 Report</div>
+                                <span class="badge bg-secondary">Download</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- 3. Attendance View -->
+        <div id="parent-attendance-view" class="view">
+            <h2 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                <span class="material-icons text-primary-custom fs-2">calendar_today</span> Attendance Records
+            </h2>
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="fw-bold m-0">Monthly Attendance</h5>
+                        <div class="badge bg-primary fs-6">Overall: <span id="parent-attendance">--</span></div>
+                    </div>
+                    <div class="row g-3 text-center mb-4">
+                        <div class="col-4">
+                            <div class="p-3 bg-success bg-opacity-10 rounded">
+                                <h3 class="fw-bold text-success mb-0">22</h3>
+                                <small class="text-muted">Present</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 bg-danger bg-opacity-10 rounded">
+                                <h3 class="fw-bold text-danger mb-0">1</h3>
+                                <small class="text-muted">Absent</small>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 bg-warning bg-opacity-10 rounded">
+                                <h3 class="fw-bold text-warning mb-0">0</h3>
+                                <small class="text-muted">Late</small>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-center text-muted">Calendar view coming soon.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Fees & Payments View -->
+        <div id="parent-fees-view" class="view">
+            <h2 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                <span class="material-icons text-primary-custom fs-2">payments</span> Fees & Payments
+            </h2>
+            <div class="row g-4">
+                <div class="col-md-5">
+                    <div class="card border-0 shadow-sm bg-primary-custom text-white">
+                        <div class="card-body p-4">
+                            <h6 class="text-uppercase opacity-75">Outstanding Balance</h6>
+                            <h2 class="fw-bold display-5 mb-0">$1,200.00</h2>
+                            <p class="small opacity-75 mb-4">Due by Oct 31, 2025</p>
+                            <button class="btn btn-warning w-100 fw-bold text-dark">Pay Now</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-7">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white fw-bold">Payment History</div>
+                        <table class="table table-hover mb-0 small">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Sep 10</td>
+                                    <td>Term 1 Tuition</td>
+                                    <td>$2,000</td>
+                                    <td><span class="badge bg-success">Paid</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Aug 15</td>
+                                    <td>Lab Fees</td>
+                                    <td>$150</td>
+                                    <td><span class="badge bg-success">Paid</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Communication View -->
+        <div id="parent-communication-view" class="view">
+            <h2 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                <span class="material-icons text-primary-custom fs-2">forum</span> Communication
+            </h2>
+            <div class="list-group">
+                <a href="#"
+                    class="list-group-item list-group-item-action p-4 border-start border-4 border-primary shadow-sm mb-3 rounded-end">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1 fw-bold">Parent-Teacher Meeting</h5>
+                        <small>Yesterday</small>
+                    </div>
+                    <p class="mb-1">Scheduled for next Friday at 10 AM regarding Alice's progress.</p>
+                    <small class="text-muted">From: Mrs. Johnson (Class Teacher)</small>
+                </a>
+                <a href="#"
+                    class="list-group-item list-group-item-action p-4 border-start border-4 border-warning shadow-sm mb-3 rounded-end">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1 fw-bold">School Bus Delay</h5>
+                        <small>2 days ago</small>
+                    </div>
+                    <p class="mb-1">Bus Route 4 will be delayed by 15 mins due to road work.</p>
+                    <small class="text-muted">From: Transport Admin</small>
+                </a>
+            </div>
+            <button class="btn btn-outline-primary d-flex align-items-center gap-2 mt-3">
+                <span class="material-icons">send</span> Send Message to Teacher
+            </button>
+        </div>
+
 
         <!-- Profile View -->
         <div id="profile-view" class="view">
@@ -4602,6 +4990,221 @@
                                     Edit Profile
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        </div>
+        </div>
+
+        <!-- 2. My Academics View -->
+        <div id="student-academics-view" class="view">
+            <h2 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                <span class="material-icons text-primary-custom fs-2">menu_book</span> My Academics
+            </h2>
+            <div class="row g-4">
+                <!-- Subjects Card -->
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3">📚 Subjects & Syllabus</h5>
+                            <div class="list-group list-group-flush">
+                                <a href="#"
+                                    class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                    <span>Mathematics</span> <span class="badge bg-primary rounded-pill">Ch 1-5</span>
+                                </a>
+                                <a href="#"
+                                    class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                    <span>Science</span> <span class="badge bg-success rounded-pill">Physics</span>
+                                </a>
+                                <a href="#"
+                                    class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                    <span>English</span> <span class="badge bg-info rounded-pill">Literature</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Timetable Card -->
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3">📅 Class Timetable</h5>
+                            <div class="alert alert-light border">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <strong>09:00 AM</strong> <span>Mathematics (Rm 101)</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <strong>10:30 AM</strong> <span>Science Lab</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <strong>01:00 PM</strong> <span>English History</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Assignments & Exams View -->
+        <div id="student-exams-view" class="view">
+            <h2 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                <span class="material-icons text-danger fs-2">assignment</span> Assignments & Exams
+            </h2>
+            <ul class="nav nav-pills mb-4" id="exams-tabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active fw-bold" id="homework-tab-btn" data-bs-toggle="pill"
+                        data-bs-target="#homework-tab">Homework</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link fw-bold" id="exams-tab-btn" data-bs-toggle="pill"
+                        data-bs-target="#exams-tab">Exam Schedules</button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link fw-bold" id="results-tab-btn" data-bs-toggle="pill"
+                        data-bs-target="#results-tab">Results</button>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="homework-tab">
+                    <div class="list-group">
+                        <div class="list-group-item p-3 border-start border-4 border-warning">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1 fw-bold">Algebra Worksheet</h5>
+                                <small class="text-danger fw-bold">Due Tomorrow</small>
+                            </div>
+                            <p class="mb-1">Complete exercises 5.1 to 5.5.</p>
+                            <small class="text-muted">Math • Posted by Mr. Smith</small>
+                        </div>
+                        <div class="list-group-item p-3 border-start border-4 border-success mt-2">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1 fw-bold">Physics Lab Report</h5>
+                                <small class="text-muted">Due in 3 days</small>
+                            </div>
+                            <p class="mb-1">Submit your findings on the pendulum experiment.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="exams-tab">
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading fw-bold"><span class="material-icons align-middle">event</span>
+                            Mid-Term Exams</h5>
+                        <p>Starting from Oct 15th. Check detailed schedule below.</p>
+                        <hr>
+                        <ul class="mb-0">
+                            <li>Oct 15: Mathematics</li>
+                            <li>Oct 17: Science</li>
+                            <li>Oct 19: English</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="results-tab">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Exam</th>
+                                        <th>Date</th>
+                                        <th>Score</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Unit Test 1</td>
+                                        <td>Sep 01</td>
+                                        <td class="fw-bold text-success">85/100</td>
+                                        <td><span class="badge bg-success">Passed</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Performance View -->
+        <div id="student-performance-view" class="view">
+            <h2 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                <span class="material-icons text-success fs-2">insights</span> Performance Analysis
+            </h2>
+            <div class="row g-4">
+                <div class="col-md-8">
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3">📈 Academic Progress</h5>
+                            <div class="d-flex align-items-end justify-content-between" style="height: 200px;">
+                                <!-- Mock Chart Bars -->
+                                <div class="w-100 d-flex justify-content-around h-100 align-items-end">
+                                    <div class="bg-primary opacity-50 rounded-top text-center text-white pt-1"
+                                        style="width: 15%; height: 60%">Unit 1<br>60%</div>
+                                    <div class="bg-primary opacity-75 rounded-top text-center text-white pt-1"
+                                        style="width: 15%; height: 75%">Unit 2<br>75%</div>
+                                    <div class="bg-primary rounded-top text-center text-white pt-1"
+                                        style="width: 15%; height: 85%">Mid<br>85%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-3">🎯 Strengths</h5>
+                            <span class="badge bg-success p-2 me-1 mb-2">Problem Solving</span>
+                            <span class="badge bg-success p-2 me-1 mb-2">Physics</span>
+                            <h5 class="fw-bold mb-3 mt-4">⚠️ Improvement Areas</h5>
+                            <span class="badge bg-warning text-dark p-2 me-1 mb-2">Grammar</span>
+                            <span class="badge bg-warning text-dark p-2 me-1 mb-2">History Dates</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Communication View -->
+        <div id="student-communication-view" class="view">
+            <h2 class="fw-bold mb-4 d-flex align-items-center gap-2">
+                <span class="material-icons text-info fs-2">forum</span> Communication Hub
+            </h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white fw-bold">📢 Notice Board</div>
+                        <div class="list-group list-group-flush">
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">School Closed</h6>
+                                    <small>Today</small>
+                                </div>
+                                <small class="text-muted">Due to heavy rain.</small>
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">Sports Day</h6>
+                                    <small>Yesterday</small>
+                                </div>
+                                <small class="text-muted">Register by Friday.</small>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white fw-bold">💬 Teacher Messages & Doubts</div>
+                        <div
+                            class="card-body d-flex flex-column justify-content-center align-items-center text-center text-muted">
+                            <span class="material-icons fs-1 mb-2 opacity-50">chat_bubble_outline</span>
+                            <h5>No new messages</h5>
+                            <p>Ask a doubt or check back later for updates from your teachers.</p>
+                            <button class="btn btn-outline-primary btn-sm mt-2">Ask a Doubt</button>
                         </div>
                     </div>
                 </div>
@@ -4825,6 +5428,78 @@
         </div>
     </div>
 
+    <!-- Moodle LMS Integration View -->
+    <div id="moodle-view" class="view container-fluid p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold text-dark m-0">Moodle Learning Management System</h3>
+                <p class="text-muted small m-0">Seamlessly access your courses and assignments</p>
+            </div>
+            <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#moodleSettingsModal">
+                <span class="material-icons align-middle me-1">settings</span> Configure
+            </button>
+        </div>
+
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-8 col-lg-6">
+                <div class="card border-0 shadow-sm rounded-4 text-center p-5">
+                    <div class="mb-4">
+                        <img src="https://moodle.org/theme/moodleorg/pix/moodle_logo_TM.svg" alt="Moodle Logo"
+                            style="height: 60px;">
+                    </div>
+                    <h4 class="fw-bold mb-3">Welcome to Moodle LMS</h4>
+                    <p class="text-muted mb-4">
+                        Click the button below to launch Moodle. You will be automatically logged in ensuring a seamless
+                        learning experience.
+                    </p>
+
+                    <button class="btn btn-warning btn-lg px-5 py-3 rounded-pill fw-bold shadow-sm"
+                        onclick="launchMoodleSSO()">
+                        <span class="material-icons align-middle me-2">open_in_new</span> Launch Moodle
+                    </button>
+
+                    <div class="mt-4 pt-4 border-top">
+                        <small class="text-muted d-block mb-2">Features enabled:</small>
+                        <div class="d-flex justify-content-center gap-3">
+                            <span class="badge bg-light text-dark border"><i
+                                    class="material-icons fs-6 align-middle me-1">vpn_key</i> Single Sign-On</span>
+                            <span class="badge bg-light text-dark border"><i
+                                    class="material-icons fs-6 align-middle me-1">sync</i> Auto-Sync</span>
+                            <span class="badge bg-light text-dark border"><i
+                                    class="material-icons fs-6 align-middle me-1">security</i> Secure Access</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Moodle Settings Modal -->
+    <div class="modal fade" id="moodleSettingsModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-bottom-0">
+                    <h5 class="modal-title fw-bold">⚙️ Moodle Configuration</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted small">Enter the URL of your Moodle instance. This will link the "Launch
+                        Moodle" button directly to your learning platform.</p>
+                    <form id="moodle-settings-form">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Moodle Site URL</label>
+                            <input type="url" id="moodle-url-input" class="form-control"
+                                placeholder="https://moodle.yourschool.edu" required>
+                            <div class="form-text">Must start with http:// or https://</div>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary-custom">Save Configuration</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- Access Card Modal (For Printing) -->
     <div class="modal fade" id="accessCardModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
@@ -4874,6 +5549,8 @@
             </div>
         </div>
     </div>
+
+
 
     <!-- Edit Student Modal (Revamped) -->
     <div class="modal fade" id="editStudentModal" tabindex="-1">
@@ -5971,6 +6648,80 @@
                         onclick="sendSidebarMessage()">
                         Send <span class="material-icons fs-6 align-middle ms-1">send</span>
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Engagement Helper Modal -->
+    <div class="modal fade" id="engagementModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow:hidden;">
+                <div class="modal-header border-0 text-white"
+                    style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px 30px;">
+                    <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+                        <span class="material-icons">auto_fix_high</span> Engagement Helper AI
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+
+                    <ul class="nav nav-pills mb-3" id="engagementTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active rounded-pill fw-bold px-4" id="upload-tab"
+                                data-bs-toggle="tab" data-bs-target="#engagement-upload" type="button" role="tab">1.
+                                Upload PDF</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link rounded-pill fw-bold px-4" id="engagement-results-tab"
+                                data-bs-toggle="tab" data-bs-target="#engagement-results" type="button" role="tab"
+                                disabled>2. Engagement
+                                Plan</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="engagementTabContent">
+                        <!-- Step 1: Upload -->
+                        <div class="tab-pane fade show active" id="engagement-upload" role="tabpanel">
+                            <div class="text-center py-5 dashed-border rounded-4 bg-white">
+                                <span class="material-icons text-primary mb-3"
+                                    style="font-size: 64px;">cloud_upload</span>
+                                <h5 class="fw-bold mb-2">Upload Lesson Material</h5>
+                                <p class="text-muted mb-4 px-5">Upload your lesson PDF (notes, textbook pages, etc.).
+                                    <br>Our AI will analyze it and suggest interactive activities.
+                                </p>
+
+                                <input type="file" id="engagement-pdf-input" class="d-none" accept="application/pdf"
+                                    onchange="updateEngagementFileName()">
+                                <button class="btn btn-primary-custom rounded-pill px-5 py-2 fw-bold shadow-sm"
+                                    onclick="document.getElementById('engagement-pdf-input').click()">
+                                    Select PDF File
+                                </button>
+                                <div id="engagement-filename" class="mt-3 fw-bold text-success d-none"></div>
+                            </div>
+                            <div class="d-flex justify-content-end mt-4">
+                                <button class="btn btn-dark fw-bold px-4 rounded-pill"
+                                    onclick="analyzeEngagementDocs()">
+                                    Analyze & Generate Ideas <span
+                                        class="material-icons align-middle ms-1">arrow_forward</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Results -->
+                        <div class="tab-pane fade" id="engagement-results" role="tabpanel">
+                            <div id="engagement-loader" class="text-center py-5 d-none">
+                                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"
+                                    role="status"></div>
+                                <h5 class="mt-3 fw-bold text-muted">Analyzing content & generating ideas...</h5>
+                                <p class="small text-muted">This may take up to 30 seconds.</p>
+                            </div>
+
+                            <div id="engagement-content" class="d-none">
+                                <!-- Dynamic Content Here -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

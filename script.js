@@ -151,8 +151,25 @@ function updateTranslations() {
 }
 
 // Initialize Language on Load
+// Initialize Language & Auth on Load
 document.addEventListener('DOMContentLoaded', () => {
     updateTranslations();
+
+    if (restoreAuthState()) {
+        if (appState.role === 'Student') {
+            renderStudentControls();
+            document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+            // Routing will handle the rest via handleHashRouting inside render
+        } else if (appState.role === 'Parent') {
+            renderParentControls();
+        } else {
+            renderTeacherControls();
+        }
+    } else {
+        // Check hash for direct link if public (e.g. login?)
+        // If hash exists but not logged in, maybe show login?
+        // switchView('landing-view'); // Default
+    }
 });
 
 
@@ -1509,9 +1526,16 @@ async function initializeDashboard() {
     if (appState.role === 'Teacher' || appState.role === 'Admin' || appState.role === 'Principal') {
         renderTeacherControls();
         renderTeacherDashboard();
-    } else if (appState.role === 'Parent' || appState.role === 'Student') {
+    } else if (appState.role === 'Parent') {
+        renderParentControls();
+        switchView('parent-dashboard-view');
+
+        if (appState.activeStudentId) {
+            loadParentChildData(); // Helper to load child data
+        }
+    } else if (appState.role === 'Student') {
         renderStudentControls();
-        switchView('student-view'); // Force switch to ensure we leave login/2FA screen
+        switchView('student-view');
 
         if (appState.activeStudentId) {
             loadStudentDashboard(appState.activeStudentId);
@@ -1779,149 +1803,304 @@ function populateStudentSelect(selectElement) {
 
 // --- FUNCTION: Fetch and Show Logs in Modal ---
 
-function renderTeacherControls() {
+async function launchMoodleSSO() {
+    console.log("Launching Moodle SSO Flow...");
+    // Simulate Moodle (SP) redirecting to Noble Nexus (IdP)
+    const clientId = "moodle_client_sim";
+    const redirectUri = "https://moodle.org/demo_dashboard"; // Destination after auth
+    const state = "security_token_" + Date.now();
+
+    // Check if user set a custom URL
+    const customUrl = localStorage.getItem('moodle_url');
+    // If we had a real Moodle, we'd redirect there. 
+    // Since we are simulating the Full Flow:
+    // We open our Authorize Endpoint which acts as the IdP login check.
+
+    const authUrl = `/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${state}`;
+
+    // Open in new window/tab to simulate "going to Moodle"
+    window.open(authUrl, 'MoodleAuth', 'width=600,height=700');
+}
+
+/* --- DYNAMIC SIDEBAR LOGIC --- */
+function getSidebarConfig(role) {
+    if (role === 'Student') {
+        return [
+            { label: 'Dashboard', icon: 'dashboard', view: 'student-view' },
+            {
+                label: 'My Courses', icon: 'menu_book', id: 'cat-courses',
+                children: [
+                    { label: 'Course List', view: 'student-academics-view', route: '/student/courses' },
+                    { label: 'Assignments', view: 'student-exams-view', route: '/student/assignments' }
+                ]
+            },
+            {
+                label: 'Exams', icon: 'event', id: 'cat-exams',
+                children: [
+                    { label: 'Upcoming Exams', view: 'upcoming-exams-view', route: '/student/exams/upcoming' },
+                    { label: 'Results', view: 'student-performance-view', route: '/student/exams/results' }
+                ]
+            },
+            {
+                label: 'Profile', icon: 'person', id: 'cat-profile',
+                children: [
+                    { label: 'View Profile', onClick: () => openProfileView(), route: '/student/profile' },
+                    { label: 'Settings', onClick: () => alert('Settings Coming Soon'), route: '/student/settings' }
+                ]
+            },
+            { label: 'Communication', icon: 'forum', view: 'student-communication-view' },
+            { label: 'Moodle LMS', icon: 'cast_for_education', view: 'moodle-view' },
+            { label: 'AI Assistant', icon: 'smart_toy', onClick: () => toggleSidebarChat() }
+        ];
+    }
+
+    // Default to Teacher/Admin structure
+    const items = [
+        { label: 'Dashboard', icon: 'dashboard', view: 'teacher-view', onClick: () => handleTeacherViewToggle('teacher-view') },
+        {
+            label: 'Classes', icon: 'class', id: 'cat-classes',
+            children: [
+                { label: 'Create Class', view: 'create-class-view', route: '/teacher/classes/create' },
+                { label: 'Manage Classes', view: 'teacher-class-management-view', route: '/teacher/classes/manage', onClick: () => handleTeacherViewToggle('teacher-class-management-view') },
+                // Add Academics here if relevant or keep separate
+            ]
+        },
+        {
+            label: 'Students', icon: 'school', id: 'cat-students',
+            children: [
+                {
+                    label: 'Add Student', view: 'add-user-view', route: '/teacher/students/add', onClick: () => {
+                        switchView('add-user-view');
+                        setTimeout(() => {
+                            const roleSelect = document.getElementById('new-user-role-view');
+                            if (roleSelect) { roleSelect.value = 'Student'; roleSelect.onchange(); }
+                        }, 100);
+                    }
+                },
+                { label: 'Student List', view: 'student-info-view', route: '/teacher/students/list', onClick: () => handleTeacherViewToggle('student-info-view') }
+            ]
+        },
+        {
+            label: 'Reports', icon: 'bar_chart', id: 'cat-reports',
+            children: [
+                { label: 'Attendance Report', view: 'attendance-report-view', route: '/teacher/reports/attendance' },
+                { label: 'Performance Report', view: 'performance-report-view', route: '/teacher/reports/performance' }
+            ]
+        }
+    ];
+
+    // Append standard items (keeping some flat for now to match old functionality if not strictly in submenus)
+    items.push({ label: 'Content & Assign.', icon: 'source', view: 'teacher-content-view', onClick: () => handleTeacherViewToggle('teacher-content-view') });
+    items.push({ label: 'Assessment', icon: 'assignment_turned_in', view: 'teacher-assessment-view', onClick: () => handleTeacherViewToggle('teacher-assessment-view') });
+    items.push({ label: 'Communication', icon: 'people', view: 'teacher-communication-view', onClick: () => handleTeacherViewToggle('teacher-communication-view') });
+    items.push({ label: 'Resource Library', icon: 'library_books', view: 'resources-view', onClick: () => handleTeacherViewToggle('resources-view') });
+
+    // Permissions
+    if (hasPermission('reports.view')) {
+        // Maybe add to Reports children?
+        // For now push to bottom
+    }
+
+    if (hasPermission('role_management')) {
+        items.push({ label: 'Roles & Perms', icon: 'security', view: 'roles-view', onClick: () => handleTeacherViewToggle('roles-view') });
+    }
+
+    if (appState.isSuperAdmin || ['Tenant_Admin', 'Principal', 'Admin'].includes(appState.role)) {
+        items.push({ label: 'Staff & Faculty', icon: 'people_alt', view: 'staff-view', onClick: () => handleTeacherViewToggle('staff-view') });
+    }
+
+    if (appState.isSuperAdmin) {
+        items.push({ label: 'System Settings', icon: 'settings', view: 'settings-view', onClick: () => handleTeacherViewToggle('settings-view') });
+    }
+
+    return items;
+}
+
+function renderSidebarFromConfig(config) {
     elements.userControls.innerHTML = '';
+    const navMenu = document.createElement('div');
+    navMenu.className = 'nav-menu';
 
-    // Show Invite Generator
-    document.getElementById('invite-section').classList.remove('d-none');
+    config.forEach(item => {
+        // Check permission if specific item has one (simplified)
+        if (item.permission && typeof item.permission === 'function' && !item.permission()) return;
 
-    // Create Navigation Menu
-    const navList = document.createElement('div');
-    navList.className = 'nav-menu';
+        // Main Item Wrapper
+        const itemWrapper = document.createElement('div');
 
-    const createNavItem = (label, icon, onClick, active = false) => {
+        // Main Link
         const a = document.createElement('a');
         a.href = '#';
-        a.className = `nav-item ${active ? 'active' : ''}`;
-        a.innerHTML = `<span class="material-icons">${icon}</span> <span>${label}</span>`;
-        a.onclick = (e) => {
-            e.preventDefault();
-            // Reset active state
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            a.classList.add('active');
-            onClick();
-        };
-        return a;
+        a.className = 'nav-item';
+        a.innerHTML = `<span class="material-icons">${item.icon}</span> <span class="flex-grow-1">${item.label}</span>`;
+
+        if (item.children) {
+            // It's a Request: Expandable
+            a.innerHTML += `<span class="material-icons arrow-icon">expand_more</span>`;
+            a.onclick = (e) => {
+                e.preventDefault();
+                // Close others
+                document.querySelectorAll('.nav-submenu.open').forEach(el => {
+                    if (el !== subMenu) {
+                        el.classList.remove('open');
+                        el.previousElementSibling.classList.remove('expanded');
+                    }
+                });
+
+                a.classList.toggle('expanded');
+                subMenu.classList.toggle('open');
+            };
+
+            // Submenu Container
+            const subMenu = document.createElement('div');
+            subMenu.className = 'nav-submenu';
+
+
+            item.children.forEach(child => {
+                // Permission check for child
+                if (child.permission && !hasPermission(child.permission)) return;
+
+                const subLink = document.createElement('a');
+                subLink.href = child.route ? '#' + child.route : '#';
+                subLink.className = 'nav-submenu-item';
+                subLink.textContent = child.label;
+                subLink.onclick = (e) => {
+                    e.preventDefault();
+                    if (child.route) {
+                        const currentHash = location.hash;
+                        const newHash = '#' + child.route;
+                        if (currentHash !== newHash) {
+                            history.pushState(null, null, newHash);
+                        }
+                    }
+
+                    // Active State
+                    document.querySelectorAll('.nav-submenu-item, .nav-item').forEach(el => el.classList.remove('active'));
+                    subLink.classList.add('active');
+                    a.classList.add('active'); // Keep parent active
+
+                    // Action
+                    if (child.onClick) {
+                        child.onClick();
+                    } else if (child.view) {
+                        switchView(child.view);
+                        // Update Title
+                        const titleEl = document.getElementById('page-title');
+                        if (titleEl) titleEl.textContent = child.label;
+                    }
+                };
+                subMenu.appendChild(subLink);
+            });
+
+            itemWrapper.appendChild(a);
+            itemWrapper.appendChild(subMenu);
+        } else {
+            // Standard Link
+            a.onclick = (e) => {
+                e.preventDefault();
+                document.querySelectorAll('.nav-item, .nav-submenu-item').forEach(el => el.classList.remove('active'));
+                a.classList.add('active');
+
+                if (item.onClick) {
+                    item.onClick();
+                } else if (item.view) {
+                    if (item.view === 'teacher-view') {
+                        // Special case for dashboard to reset things
+                        if (typeof handleTeacherViewToggle === 'function') handleTeacherViewToggle('teacher-view');
+                        else switchView(item.view);
+                    } else {
+                        switchView(item.view);
+                    }
+                    const titleEl = document.getElementById('page-title');
+                    if (titleEl) titleEl.textContent = item.label;
+                }
+            };
+            itemWrapper.appendChild(a);
+        }
+
+        navMenu.appendChild(itemWrapper);
+    });
+
+    elements.userControls.appendChild(navMenu);
+
+    // Check initial hash routing if we are just rendering
+    handleHashRouting();
+}
+
+/* --- ROUTER --- */
+function handleHashRouting() {
+    const hash = location.hash.replace('#', '');
+    if (!hash) return;
+
+    // Find config item matching route
+    const findItem = (items) => {
+        for (const item of items) {
+            if (item.route === hash || (item.route && hash.startsWith(item.route))) return item;
+            if (item.children) {
+                const found = findItem(item.children);
+                if (found) return found;
+            }
+        }
+        return null;
     };
 
-    // Dashboard
-    navList.appendChild(createNavItem('Dashboard', 'dashboard', () => {
-        handleTeacherViewToggle('teacher-view');
-        document.getElementById('page-title').textContent = 'Dashboard';
-    }, true));
+    const role = appState.role || 'Teacher'; // Default
+    const config = getSidebarConfig(role);
+    const item = findItem(config);
 
-    // Courses
-    navList.appendChild(createNavItem('Courses', 'class', () => {
-        handleTeacherViewToggle('groups-view');
-        document.getElementById('page-title').textContent = 'My Courses';
-    }));
+    if (item) {
+        if (item.view) switchView(item.view);
+        if (item.onClick) item.onClick();
 
-    // Students (Selector for Teacher)
-    navList.appendChild(createNavItem('Students', 'school', () => {
-        handleTeacherViewToggle('student-view'); // Re-uses student view but via selector
-        document.getElementById('page-title').textContent = 'Student Details';
-    }));
-
-
-
-    // Role Management (New)
-    if (hasPermission('role_management')) {
-        const roleItem = createNavItem('Roles & Perms', 'security', () => {
-            handleTeacherViewToggle('roles-view');
-            document.getElementById('page-title').textContent = 'Role Management';
-        });
-        navList.appendChild(roleItem);
+        // Highlight Sidebar
+        setTimeout(() => {
+            document.querySelectorAll('.nav-submenu-item, .nav-item').forEach(el => el.classList.remove('active'));
+            // Find link by href
+            const link = document.querySelector(`a[href="#${hash}"]`);
+            if (link) {
+                link.classList.add('active');
+                // Open parent if submenu
+                const parent = link.closest('.nav-submenu');
+                if (parent) {
+                    parent.classList.add('open');
+                    if (parent.previousElementSibling) parent.previousElementSibling.classList.add('expanded', 'active');
+                }
+            }
+        }, 100);
     }
+}
 
-    // Compliance & Security (New)
-    if (hasPermission('compliance.view')) {
-        navList.appendChild(createNavItem('Compliance', 'gavel', () => {
-            handleTeacherViewToggle('compliance-view');
-            document.getElementById('page-title').textContent = 'Compliance & Security';
-        }));
-    }
-
-    // Finance (New)
-    if (hasPermission('finance.view') || hasPermission('finance.manage')) {
-        navList.appendChild(createNavItem('Finance & Billing', 'account_balance', () => {
-            handleTeacherViewToggle('finance-view');
-            document.getElementById('page-title').textContent = 'Finance & Billing';
-        }));
-    }
-
-    // Academics
-    if (hasPermission('class.view') || appState.role === 'Teacher' || appState.isSuperAdmin) {
-        navList.appendChild(createNavItem('Academic Mgt', 'menu_book', () => {
-            handleTeacherViewToggle('academics-view');
-            document.getElementById('page-title').textContent = 'Academic Management';
-        }));
-    }
-
-    // Student Info (New)
-    if (hasPermission('student.info.view') || appState.role === 'Teacher') {
-        navList.appendChild(createNavItem('Student Info', 'school', () => {
-            handleTeacherViewToggle('student-info-view');
-            document.getElementById('page-title').textContent = 'Student Information Management';
-        }));
-    }
-
-    // Staff & Faculty (New)
-    // Restricted to Principal and Admin only as per specific user request
-    if (appState.isSuperAdmin || appState.role === 'Tenant_Admin' || appState.role === 'Principal' || appState.role === 'Admin') {
-        navList.appendChild(createNavItem('Staff & Faculty', 'people_alt', () => {
-            handleTeacherViewToggle('staff-view');
-            document.getElementById('page-title').textContent = 'Staff & Faculty Management';
-        }));
-    }
+// Listen for PopState (Back/Forward)
+window.addEventListener('popstate', handleHashRouting);
 
 
 
 
 
+function renderTeacherControls() {
+    elements.userControls.innerHTML = '';
+    // Show Invite Generator
+    const inviteSection = document.getElementById('invite-section');
+    if (inviteSection) inviteSection.classList.remove('d-none');
 
-    // Resources & Policies (Global)
-    navList.appendChild(createNavItem('Resource Library', 'library_books', () => {
-        handleTeacherViewToggle('resources-view');
-        document.getElementById('page-title').textContent = 'Resource & Policy Library';
-        loadResources();
-        if (appState.role === 'Tenant_Admin' || appState.role === 'Principal' || appState.isSuperAdmin) {
-            document.getElementById('btn-upload-resource')?.classList.remove('d-none');
-        } else {
-            document.getElementById('btn-upload-resource')?.classList.add('d-none');
-        }
-    }));
-
-    // Reports
-
-    if (hasPermission('reports.view')) {
-        navList.appendChild(createNavItem('Reports', 'bar_chart', () => {
-            handleTeacherViewToggle('reports-view');
-            document.getElementById('page-title').textContent = 'Reports';
-        }));
-    }
-
-
-
-    // System Settings - Restricted to Super Admin
-    if (appState.isSuperAdmin) {
-        navList.appendChild(createNavItem('System Settings', 'settings', () => {
-            handleTeacherViewToggle('settings-view');
-            document.getElementById('page-title').textContent = 'System Settings';
-        }));
-    }
-
-
-
-    elements.userControls.appendChild(navList);
-
+    const config = getSidebarConfig('Teacher'); // Helper handles Admin/Principal too
+    renderSidebarFromConfig(config);
 }
 
 function renderStudentControls() {
     elements.userControls.innerHTML = '';
     const inviteSection = document.getElementById('invite-section');
-    if (inviteSection) inviteSection.classList.add('d-none'); // Hide invite for students
+    if (inviteSection) inviteSection.classList.add('d-none');
 
-    // Create Navigation Menu
+    const config = getSidebarConfig('Student');
+    renderSidebarFromConfig(config);
+}
+
+function renderParentControls() {
+    elements.userControls.innerHTML = '';
+    const inviteSection = document.getElementById('invite-section');
+    if (inviteSection) inviteSection.classList.add('d-none');
+
     const navList = document.createElement('div');
     navList.className = 'nav-menu';
 
@@ -1939,54 +2118,46 @@ function renderStudentControls() {
         return a;
     };
 
-    // Dashboard
-    const dashLabel = (appState.role === 'Parent') ? "Child's Dashboard" : "My Dashboard";
-    navList.appendChild(createNavItem(dashLabel, 'dashboard', () => {
-        switchView('student-view');
-        document.getElementById('page-title').textContent = dashLabel;
+    // 1. Dashboard
+    navList.appendChild(createNavItem('Dashboard', 'dashboard', () => {
+        switchView('parent-dashboard-view');
+        document.getElementById('page-title').textContent = 'Parent Dashboard';
     }, true));
 
-    // My Courses
-    const courseLabel = (appState.role === 'Parent') ? "Child's Courses" : "My Courses";
-    navList.appendChild(createNavItem(courseLabel, 'class', () => {
-        switchView('student-view');
-        // Simple scroll to courses
-        const courses = document.getElementById('student-groups-list');
-        if (courses) courses.scrollIntoView({ behavior: 'smooth' });
-        document.getElementById('page-title').textContent = courseLabel;
+    // 2. Academic Progress
+    navList.appendChild(createNavItem('Academic Progress', 'auto_stories', () => {
+        switchView('parent-academic-view');
+        document.getElementById('page-title').textContent = 'Academic Progress';
     }));
 
-    // Live Classes
-    navList.appendChild(createNavItem('Live Classes', 'live_tv', () => {
-        switchView('student-view');
-        const live = document.getElementById('live-classes-list');
-        if (live) live.scrollIntoView({ behavior: 'smooth' });
-        document.getElementById('page-title').textContent = 'Live Classes';
+    // 3. Attendance
+    navList.appendChild(createNavItem('Attendance', 'calendar_today', () => {
+        switchView('parent-attendance-view');
+        document.getElementById('page-title').textContent = 'Attendance Records';
+    }));
+
+    // 4. Fees & Payments
+    navList.appendChild(createNavItem('Fees & Payments', 'payments', () => {
+        switchView('parent-fees-view');
+        document.getElementById('page-title').textContent = 'Fees & Payments';
+    }));
+
+    // 5. Communication
+    navList.appendChild(createNavItem('Communication', 'forum', () => {
+        switchView('parent-communication-view');
+        document.getElementById('page-title').textContent = 'Communication';
     }));
 
 
 
 
-    // Global Resources
-    navList.appendChild(createNavItem('Resources', 'library_books', () => {
-        switchView('resources-view');
-        loadResources();
-        document.getElementById('page-title').textContent = 'Resource & Policy Library';
-        // Hide upload button for students
-        document.getElementById('btn-upload-resource')?.classList.add('d-none');
-    }));
 
-    // Education Assistant
+    // Assistant
     navList.appendChild(createNavItem('Education Assistant', 'smart_toy', () => {
         toggleSidebarChat();
     }));
 
-
-
     elements.userControls.appendChild(navList);
-
-    // Add "My Profile" Widget (Mimicking Student Selector style)
-
 }
 
 function handleTeacherViewToggle(view) {
@@ -2017,6 +2188,9 @@ function handleTeacherViewToggle(view) {
         renderAcademicsDashboard();
     } else if (view === 'finance-view') {
         switchView('finance-view');
+    } else if (view === 'moodle-view') {
+        switchView('moodle-view');
+
     } else if (view === 'staff-view') {
         switchView('staff-view');
     } else if (view === 'student-info-view') {
@@ -2028,6 +2202,14 @@ function handleTeacherViewToggle(view) {
         }
     } else if (view === 'resources-view') {
         switchView('resources-view');
+    } else if (view === 'teacher-class-management-view') {
+        switchView('teacher-class-management-view');
+    } else if (view === 'teacher-content-view') {
+        switchView('teacher-content-view');
+    } else if (view === 'teacher-assessment-view') {
+        switchView('teacher-assessment-view');
+    } else if (view === 'teacher-communication-view') {
+        switchView('teacher-communication-view');
     } else if (view === 'communication-view') {
         switchView('communication-view');
         renderCommunicationDashboard();
@@ -9013,3 +9195,149 @@ function appendSidebarMessage(sender, text, isTyping = false) {
     chatBody.scrollTop = chatBody.scrollHeight;
     return msgDiv.id;
 }
+
+// --- MOODLE INTEGRATION ---
+// --- ENGAGEMENT HELPER LOGIC ---
+function updateEngagementFileName() {
+    const input = document.getElementById('engagement-pdf-input');
+    const display = document.getElementById('engagement-filename');
+    if (input.files && input.files[0]) {
+        display.textContent = `Selected: ${input.files[0].name}`;
+        display.classList.remove('d-none');
+    } else {
+        display.classList.add('d-none');
+    }
+}
+
+async function analyzeEngagementDocs() {
+    const input = document.getElementById('engagement-pdf-input');
+    if (!input.files || !input.files[0]) {
+        alert("Please select a PDF file first.");
+        return;
+    }
+
+    // Switch tabs
+    // Switch tabs
+    const resultsTabBtn = document.getElementById('engagement-results-tab');
+    resultsTabBtn.disabled = false;
+    const tab = new bootstrap.Tab(resultsTabBtn);
+    tab.show();
+
+    // Show Loader
+    document.getElementById('engagement-loader').classList.remove('d-none');
+    document.getElementById('engagement-content').classList.add('d-none');
+
+    // Upload
+    const formData = new FormData();
+    formData.append("file", input.files[0]);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/ai/analyze-engagement`, {
+            method: 'POST',
+            headers: {
+                'X-User-Id': appState.userId || '',
+                'X-User-Role': appState.role || ''
+            },
+            body: formData
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.detail || "Analysis failed");
+        }
+
+        const data = await response.json();
+        renderEngagementResults(data);
+
+    } catch (e) {
+        console.error(e);
+        document.getElementById('engagement-loader').classList.add('d-none');
+        document.getElementById('engagement-content').classList.remove('d-none');
+        document.getElementById('engagement-content').innerHTML = `
+            <div class="alert alert-danger">
+                <h5 class="fw-bold">Error</h5>
+                <p>${e.message}</p>
+                <button class="btn btn-sm btn-outline-danger" onclick="analyzeEngagementDocs()">Try Again</button>
+            </div>
+        `;
+    }
+}
+
+function renderEngagementResults(data) {
+    const loader = document.getElementById('engagement-loader');
+    const content = document.getElementById('engagement-content');
+
+    loader.classList.add('d-none');
+    content.classList.remove('d-none');
+
+    if (!data.is_educational) {
+        content.innerHTML = `
+            <div class="text-center py-5">
+                <span class="material-icons text-warning" style="font-size: 64px;">warning_amber</span>
+                <h4 class="fw-bold mt-3">Not an Educational Document?</h4>
+                <p class="text-muted px-5 mb-4">Our AI analyzed this document and it doesn't seem to be related to educational content.</p>
+                <div class="p-3 bg-light rounded text-start mx-auto" style="max-width: 500px;">
+                    <strong>Reasoning:</strong>
+                    <p class="mb-0 text-secondary">${data.message || "Content appears to be unrelated to classroom topics."}</p>
+                </div>
+                 <button class="btn btn-primary mt-4" onclick="document.getElementById('upload-tab').click()">Try Another File</button>
+            </div>
+        `;
+        return;
+    }
+
+    // Build Lists
+    const buildList = (items, icon) => {
+        if (!items || items.length === 0) return '<p class="text-muted fst-italic">No suggestions generated.</p>';
+        return items.map(i => `
+            <div class="d-flex gap-3 mb-3 p-3 rounded bg-white shadow-sm border element-hover">
+                <span class="material-icons text-primary">${icon}</span>
+                <div>${i}</div>
+            </div>
+        `).join('');
+    };
+
+    content.innerHTML = `
+        <div class="alert alert-success d-flex align-items-center gap-3">
+             <span class="material-icons">check_circle</span>
+             <div>
+                <strong>Content Verified: Educational</strong>
+                <div class="small">${data.summary || ""}</div>
+             </div>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Activities -->
+            <div class="col-md-6">
+                <h6 class="fw-bold text-uppercase text-secondary mb-3 small ls-1">Interactive Activities</h6>
+                ${buildList(data.activities, 'groups')}
+            </div>
+             <!-- Examples -->
+            <div class="col-md-6">
+                <h6 class="fw-bold text-uppercase text-secondary mb-3 small ls-1">Real-Life Examples</h6>
+                ${buildList(data.real_life_examples, 'public')}
+            </div>
+             <!-- Discussion -->
+            <div class="col-md-6">
+                <h6 class="fw-bold text-uppercase text-secondary mb-3 small ls-1">Discussion Questions</h6>
+                ${buildList(data.discussion_questions, 'question_answer')}
+            </div>
+             <!-- Games -->
+            <div class="col-md-6">
+                <h6 class="fw-bold text-uppercase text-secondary mb-3 small ls-1">Gamification Ideas</h6>
+                ${buildList(data.games, 'sports_esports')}
+            </div>
+        </div>
+        
+        <div class="mt-4 text-center">
+             <button class="btn btn-outline-primary rounded-pill me-2" onclick="window.print()">
+                <span class="material-icons align-middle">print</span> Print
+             </button>
+             <button class="btn btn-dark rounded-pill" onclick="document.getElementById('upload-tab').click()">
+                Analyze Another
+             </button>
+        </div>
+    `;
+}
+
+

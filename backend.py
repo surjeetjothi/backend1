@@ -1,4 +1,8 @@
-from fastapi import FastAPI, HTTPException, Header, Depends, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Header, Depends, WebSocket, WebSocketDisconnect, Request
+import secrets
+import time
+import hmac
+import hashlib
 # Trigger Reload (Last updated: School Fix)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, Response, StreamingResponse
@@ -85,6 +89,7 @@ try:
     # Initialize the Groq Client.
     from groq import Groq
     
+    # User provided key overrides env var for now to ensure it works
     api_key = os.getenv("GROQ_API_KEY")
     
     if api_key:
@@ -145,6 +150,16 @@ async def lifespan(app: FastAPI):
     yield
     # Shutdown (if any cleanup is needed)
     logger.info("Shutting down...")
+
+# --- NEW AI ENGAGEMENT MODELS ---
+class EngagementResponse(BaseModel):
+    is_educational: bool
+    summary: Optional[str] = None
+    activities: List[str] = []
+    real_life_examples: List[str] = []
+    discussion_questions: List[str] = []
+    games: List[str] = []
+    message: Optional[str] = None
 
 app = FastAPI(title="EdTech AI Portal API - Enhanced", lifespan=lifespan)
 
@@ -2012,6 +2027,102 @@ async def generate_lesson_plan(
     *   **Exit Ticket:** Ask one checking question.
     """
     return LessonPlanResponse(content=plan)
+
+
+import hmac
+import hashlib
+import time
+
+
+
+# --- LTI SUPPORT (Tool Consumer Simulation) ---
+import urllib.parse
+import base64
+
+def sign_oauth_hmac_sha1(method, url, params, consumer_secret):
+    # 1. Sort and encode params
+    from urllib.parse import quote
+    
+    # helper to percent encode strictly
+    def percent_encode(s):
+        return quote(str(s), safe=b'')
+
+    sorted_params = sorted(params.items())
+    normalized_params = '&'.join([f"{percent_encode(k)}={percent_encode(v)}" for k, v in sorted_params])
+    
+    # 2. Base String
+    base_string = f"{method.upper()}&{percent_encode(url)}&{percent_encode(normalized_params)}"
+    
+    # 3. Signing Key
+    key = f"{percent_encode(consumer_secret)}&" # Token secret is empty for LTI launch usually
+    
+    # 4. HMAC-SHA1
+    hashed = hmac.new(key.encode(), base_string.encode(), hashlib.sha1)
+    return base64.b64encode(hashed.digest()).decode()
+
+@app.post("/api/lti/launch")
+async def get_lti_launch_data(request: Request, x_user_id: str = Header(None, alias="X-User-Id")):
+    # In a real app, we would look up the tool config (Consumer Key/Secret) based on the requested resource
+    body = await request.json()
+    tool_url = body.get('url')
+    
+    if not tool_url:
+        raise HTTPException(status_code=400, detail="Tool URL required")
+
+    # Mock Consumer Config
+    consumer_key = "test"
+    consumer_secret = "secret"
+    
+    # LTI Parameters
+    params = {
+        "lti_message_type": "basic-lti-launch-request",
+        "lti_version": "LTI-1p0",
+        "resource_link_id": "nexus_resource_1",
+        "user_id": x_user_id,
+        "roles": "Learner",
+        "lis_person_name_full": "Noble Student",
+        "oauth_consumer_key": consumer_key,
+        "oauth_signature_method": "HMAC-SHA1",
+        "oauth_timestamp": str(int(time.time())),
+        "oauth_nonce": secrets.token_hex(8),
+        "oauth_version": "1.0",
+        "oauth_callback": "about:blank"
+    }
+    
+    # Sign
+    params["oauth_signature"] = sign_oauth_hmac_sha1("POST", tool_url, params, consumer_secret)
+    
+    return {
+        "url": tool_url,
+        "params": params
+    }
+
+@app.get("/api/moodle/assignments")
+async def get_moodle_assignments(x_user_id: str = Header(None, alias="X-User-Id")):
+    return [
+        {
+            "id": 1,
+            "course": "CS101",
+            "name": "Python Basics Project",
+            "duedate": int(time.time() + 86400 * 2), # 2 days from now
+            "status": "submitted"
+        },
+        {
+            "id": 2,
+            "course": "MATH202",
+            "name": "Calculus Quiz 3",
+            "duedate": int(time.time() + 86400 * 5),
+            "status": "pending"
+        }
+    ]
+
+@app.get("/api/moodle/grades")
+async def get_moodle_grades(x_user_id: str = Header(None, alias="X-User-Id")):
+    return [
+        {"course": "CS101", "itemname": "Midterm Exam", "grade": 88.5, "range": "0-100", "feedback": "Good job!"},
+        {"course": "CS101", "itemname": "Python Basics Project", "grade": 92.0, "range": "0-100", "feedback": "Excellent code structure."},
+        {"course": "HIST101", "itemname": "Ancient Civ Essay", "grade": 95.0, "range": "0-100", "feedback": "Very detailed."}
+    ]
 
 @app.post("/api/auth/login", response_model=LoginResponse)
 async def login_user(request: LoginRequest):
@@ -5198,8 +5309,266 @@ async def delete_resource(resource_id: int):
     finally:
         conn.close()
 
-if __name__ == "__main__":
 
+
+
+
+
+
+
+
+
+# --- MOODLE SSO (OAuth2 Provider) ---
+# In production, use Redis or DB for these stores
+OAUTH_CODES = {}
+OAUTH_ACCESS_TOKENS = {}
+
+@app.get("/oauth/authorize", response_class=HTMLResponse)
+async def oauth_authorize(response_type: str, client_id: str, redirect_uri: str, state: str, scope: Optional[str] = None):
+    # This endpoint renders a page that checks if the user is logged in (via JS) 
+    # and then calls /api/oauth/approve to generate a code.
+    # We serve a static HTML that handles the logic.
+    try:
+        with open("class/static/sso_authorize.html", "r") as f:
+            content = f.read()
+    except FileNotFoundError:
+        try:
+             with open("static/sso_authorize.html", "r") as f:
+                content = f.read()
+        except FileNotFoundError:
+            return HTMLResponse(content="<h1>Error: sso_authorize.html not found</h1>", status_code=500)
+    return HTMLResponse(content=content)
+
+class OAuthApproveRequest(BaseModel):
+    user_id: str
+    client_id: str
+    redirect_uri: str
+    state: str
+
+@app.post("/api/oauth/approve")
+async def oauth_approve(request: OAuthApproveRequest):
+    # Verify user exists (simple check)
+    conn = get_db_connection()
+    user = conn.execute("SELECT id FROM students WHERE id = ?", (request.user_id,)).fetchone()
+    conn.close()
+    
+    if not user:
+         raise HTTPException(status_code=400, detail="User not found")
+
+    # Generate Authorization Code
+    auth_code = secrets.token_urlsafe(16)
+    OAUTH_CODES[auth_code] = {
+        "user_id": request.user_id,
+        "client_id": request.client_id,
+        "redirect_uri": request.redirect_uri,
+        "expires_at": time.time() + 600 # 10 minutes
+    }
+    
+    # Return the redirect URL that the frontend should follow
+    # Moodle expects: redirect_uri + ?code=... + &state=...
+    separator = "&" if "?" in request.redirect_uri else "?"
+    redirect_url = f"{request.redirect_uri}{separator}code={auth_code}&state={request.state}"
+    
+    return {"redirect_url": redirect_url}
+
+@app.get("/.well-known/openid-configuration")
+async def openid_configuration(request: Request):
+    base_url = str(request.base_url).rstrip('/')
+    return {
+        "issuer": base_url,
+        "authorization_endpoint": f"{base_url}/oauth/authorize",
+        "token_endpoint": f"{base_url}/oauth/token",
+        "userinfo_endpoint": f"{base_url}/oauth/userinfo",
+        "jwks_uri": f"{base_url}/oauth/jwks",
+        "response_types_supported": ["code"],
+        "subject_types_supported": ["public"],
+        "id_token_signing_alg_values_supported": ["HS256"],
+        "scopes_supported": ["openid", "profile", "email"]
+    }
+
+# Minimal JWT Generator (HS256)
+def generate_jwt(payload, secret):
+    import base64
+    def b64url(data):
+        return base64.urlsafe_b64encode(data).rstrip(b'=')
+        
+    header = {"alg": "HS256", "typ": "JWT"}
+    segments = [
+        b64url(json.dumps(header).encode()),
+        b64url(json.dumps(payload).encode())
+    ]
+    signing_input = b'.'.join(segments)
+    signature = hmac.new(secret.encode(), signing_input, hashlib.sha256).digest()
+    segments.append(b64url(signature))
+    return b'.'.join(segments).decode()
+
+@app.post("/oauth/token")
+async def oauth_token(
+    request: Request,
+    grant_type: str = Form(...),
+    code: str = Form(...),
+    client_id: str = Form(...),
+    client_secret: str = Form(None), # Optional for public clients
+    redirect_uri: str = Form(...)
+):
+    # Validate Code
+    token_data = OAUTH_CODES.get(code)
+    if not token_data:
+        raise HTTPException(status_code=400, detail="Invalid grant: Code not found")
+        
+    if time.time() > token_data["expires_at"]:
+        del OAUTH_CODES[code]
+        raise HTTPException(status_code=400, detail="Code expired")
+        
+    # In strict OAuth, we validate client_id matches the one in code
+    if token_data["client_id"] != client_id: 
+        raise HTTPException(status_code=400, detail="Invalid client_id")
+    
+    # Generate Access Token
+    access_token = secrets.token_urlsafe(32)
+    expires_in = 3600
+    
+    OAUTH_ACCESS_TOKENS[access_token] = {
+        "user_id": token_data["user_id"],
+        "expires_at": time.time() + expires_in
+    }
+    
+    # Generate ID Token (OIDC)
+    base_url = str(request.base_url).rstrip('/')
+    id_token_payload = {
+        "iss": base_url,
+        "sub": token_data["user_id"],
+        "aud": client_id,
+        "exp": int(time.time()) + expires_in,
+        "iat": int(time.time())
+    }
+    # Use a persistent secret in production
+    id_token = generate_jwt(id_token_payload, "SUPER_SECRET_SIGNING_KEY")
+    
+    # Delete used code
+    del OAUTH_CODES[code]
+    
+    return {
+        "access_token": access_token,
+        "token_type": "Bearer",
+        "expires_in": expires_in,
+        "id_token": id_token
+    }
+
+@app.get("/oauth/userinfo")
+async def oauth_userinfo(authorization: str = Header(...)):
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid header")
+    
+    token = authorization.split(" ")[1]
+    token_data = OAUTH_ACCESS_TOKENS.get(token)
+    
+    if not token_data or time.time() > token_data["expires_at"]:
+         raise HTTPException(status_code=401, detail="Invalid or expired token")
+         
+    user_id = token_data["user_id"]
+    
+    conn = get_db_connection()
+    user = conn.execute("SELECT * FROM students WHERE id = ?", (user_id,)).fetchone()
+    conn.close()
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Return OpenID Connect compliant claims
+    return {
+        "sub": user['id'],
+        "name": user['name'],
+        "email": f"{user['id']}@noblenexus.edu", 
+        "given_name": user['name'].split(" ")[0],
+        "family_name": " ".join(user['name'].split(" ")[1:]) if " " in user['name'] else "",
+        "picture": "https://www.w3schools.com/howto/img_avatar.png"
+    }
+
+if __name__ == "__main__":
     import uvicorn
     # Use the current file name 'backend' as the module
     uvicorn.run("backend:app", host="0.0.0.0", port=8000, reload=True)
+
+@app.post("/api/ai/analyze-engagement", response_model=EngagementResponse)
+async def analyze_engagement_pdf(file: UploadFile = File(...)):
+    """
+    Analyzes an uploaded PDF to check if it's educational.
+    If yes, provides interactive activities, real-life examples, discussion questions, and games.
+    """
+    if not AI_ENABLED or not GROQ_CLIENT:
+        raise HTTPException(status_code=503, detail="AI Service is unavailable (API Key missing).")
+
+    if file.content_type != "application/pdf":
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a PDF.")
+
+    try:
+        # 1. Extract Text from PDF
+        content_bytes = await file.read()
+        pdf_file = io.BytesIO(content_bytes)
+        
+        try:
+            reader = PdfReader(pdf_file)
+            text = ""
+            # Limit to first 10 pages to avoid context limit issues and speed up processing
+            for page in reader.pages[:10]: 
+                text += page.extract_text() + "\n"
+        except Exception as e:
+             logger.error(f"PDF Parsing Failed: {e}")
+             raise HTTPException(status_code=400, detail="Failed to read PDF content.")
+
+        if len(text.strip()) < 50:
+             raise HTTPException(status_code=400, detail="The PDF contains insufficient text to analyze.")
+
+        # 2. Construct Prompt for AI
+        system_prompt = (
+            "You are an expert pedagogical consultant and curriculum developer. "
+            "Your task is to analyze the provided text from a document to determine if it is educational material suitable for a classroom context.\n"
+            "Output must be strictly valid JSON matching this structure:\n"
+            "{\n"
+            '  "is_educational": boolean,\n'
+            '  "summary": "Brief summary of the content (if educational)",\n'
+            '  "activities": ["List of 3-5 interactive classroom activities"],\n'
+            '  "real_life_examples": ["List of 3 real-world applications of this topic"],\n'
+            '  "discussion_questions": ["List of 3 thought-provoking questions"],\n'
+            '  "games": ["List of 2 simple gamification ideas for this topic"],\n'
+            '  "message": "Reasoning if not educational"\n'
+            "}\n"
+            "If the content is NOT educational (e.g., invoices, legal contracts unrelated to law class, random gibberish), set is_educational to false."
+        )
+
+        user_prompt = f"Analyze this content:\n\n{text[:10000]}" # Truncate to avoid token limits
+
+        # 3. Call AI
+        completion = GROQ_CLIENT.chat.completions.create(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            model=GROQ_MODEL,
+            temperature=0.4,
+            response_format={"type": "json_object"}
+        )
+
+        response_content = completion.choices[0].message.content
+        logger.info(f"AI Response: {response_content}")
+
+        # 4. Parse Response
+        data = json.loads(response_content)
+        
+        return EngagementResponse(
+            is_educational=data.get("is_educational", False),
+            summary=data.get("summary"),
+            activities=data.get("activities", []),
+            real_life_examples=data.get("real_life_examples", []),
+            discussion_questions=data.get("discussion_questions", []),
+            games=data.get("games", []),
+            message=data.get("message")
+        )
+
+    except json.JSONDecodeError:
+        logger.error("Failed to parse AI JSON response.")
+        raise HTTPException(status_code=500, detail="AI response was not in valid format.")
+    except Exception as e:
+        logger.error(f"AI Engagement Analysis Failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
